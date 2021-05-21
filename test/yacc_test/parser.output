@@ -50,7 +50,7 @@ Grammar
    24     | iteration_stmt
    25     | return_stmt
 
-   26 expr_stmt: expr SEMI
+   26 expr_stmt: simple_expr SEMI
    27          | SEMI
 
    28 selection_stmt: IF LP expr RP stmt
@@ -69,7 +69,7 @@ Grammar
    37          | simple_expr
 
    38 var_list: var COMMA var_list
-   39         | var ASSIGN
+   39         | var
    40         | UNDERSCORE
 
    41 var: IDENTIFIER
@@ -103,7 +103,7 @@ Grammar
    62       | FLOAT
    63       | INTEGER
 
-   64 call: IDENTIFIER LP args RP SEMI
+   64 call: IDENTIFIER LP args RP
 
    65 args: arg_list
    66     | %empty
@@ -137,8 +137,8 @@ Terminals, with rules where they appear
     LT (276) 45
     EQUAL (277) 48
     UNEQUAL (278) 49
-    ASSIGN (279) 35 39
-    SEMI (280) 6 7 26 27 31 32 33 34 64
+    ASSIGN (279) 35
+    SEMI (280) 6 7 26 27 31 32 33 34
     AND (281)
     OR (282)
     NOT (283)
@@ -213,7 +213,7 @@ Nonterminals, with rules where they appear
         on right: 25
     expr <sVal> (59)
         on left: 35
-        on right: 26 28 29 30 34
+        on right: 28 29 30 34
     expr_list (60)
         on left: 36 37
         on right: 35 36
@@ -225,7 +225,7 @@ Nonterminals, with rules where they appear
         on right: 38 39 60
     simple_expr <sVal> (63)
         on left: 42 43
-        on right: 36 37 59 67 68
+        on right: 26 36 37 59 67 68
     relop (64)
         on left: 44 45 46 47 48 49
         on right: 42
@@ -594,7 +594,7 @@ State 36
    16 compound_stmt: LCP local_decls . stmt_list RCP
    17 local_decls: local_decls . var_decl
    19 stmt_list: . stmt_list stmt
-   20          | . %empty  [LCP, RCP, UNDERSCORE, SEMI, IF, WHILE, RETURN, IDENTIFIER]
+   20          | . %empty  [LP, LCP, RCP, SEMI, IF, WHILE, RETURN, INTEGER, IDENTIFIER, FLOAT]
 
     SYS_TYPE  shift, and go to state 2
 
@@ -622,7 +622,7 @@ State 38
    23     | . selection_stmt
    24     | . iteration_stmt
    25     | . return_stmt
-   26 expr_stmt: . expr SEMI
+   26 expr_stmt: . simple_expr SEMI
    27          | . SEMI
    28 selection_stmt: . IF LP expr RP stmt
    29               | . IF LP expr RP stmt ELSE stmt
@@ -631,44 +631,80 @@ State 38
    32            | . RETURN INTEGER SEMI
    33            | . RETURN FLOAT SEMI
    34            | . RETURN expr SEMI
-   35 expr: . var_list ASSIGN expr_list
-   38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
-   40         | . UNDERSCORE
    41 var: . IDENTIFIER
+   42 simple_expr: . additive_expr relop additive_expr
+   43            | . additive_expr
+   50 additive_expr: . additive_expr addop term
+   51              | . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
 
+    LP          shift, and go to state 39
     LCP         shift, and go to state 34
-    RCP         shift, and go to state 39
-    UNDERSCORE  shift, and go to state 40
+    RCP         shift, and go to state 40
     SEMI        shift, and go to state 41
     IF          shift, and go to state 42
     WHILE       shift, and go to state 43
     RETURN      shift, and go to state 44
-    IDENTIFIER  shift, and go to state 45
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
 
-    compound_stmt   go to state 46
-    stmt            go to state 47
-    expr_stmt       go to state 48
-    selection_stmt  go to state 49
-    iteration_stmt  go to state 50
-    return_stmt     go to state 51
-    expr            go to state 52
-    var_list        go to state 53
+    compound_stmt   go to state 48
+    stmt            go to state 49
+    expr_stmt       go to state 50
+    selection_stmt  go to state 51
+    iteration_stmt  go to state 52
+    return_stmt     go to state 53
     var             go to state 54
+    simple_expr     go to state 55
+    additive_expr   go to state 56
+    term            go to state 57
+    factor          go to state 58
+    call            go to state 59
 
 
 State 39
 
-   16 compound_stmt: LCP local_decls stmt_list RCP .
+   41 var: . IDENTIFIER
+   42 simple_expr: . additive_expr relop additive_expr
+   43            | . additive_expr
+   50 additive_expr: . additive_expr addop term
+   51              | . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   59       | LP . simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
 
-    $default  reduce using rule 16 (compound_stmt)
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
+
+    var            go to state 54
+    simple_expr    go to state 60
+    additive_expr  go to state 56
+    term           go to state 57
+    factor         go to state 58
+    call           go to state 59
 
 
 State 40
 
-   40 var_list: UNDERSCORE .
+   16 compound_stmt: LCP local_decls stmt_list RCP .
 
-    $default  reduce using rule 40 (var_list)
+    $default  reduce using rule 16 (compound_stmt)
 
 
 State 41
@@ -683,14 +719,14 @@ State 42
    28 selection_stmt: IF . LP expr RP stmt
    29               | IF . LP expr RP stmt ELSE stmt
 
-    LP  shift, and go to state 55
+    LP  shift, and go to state 61
 
 
 State 43
 
    30 iteration_stmt: WHILE . LP expr RP stmt
 
-    LP  shift, and go to state 56
+    LP  shift, and go to state 62
 
 
 State 44
@@ -701,164 +737,500 @@ State 44
    34            | RETURN . expr SEMI
    35 expr: . var_list ASSIGN expr_list
    38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
+   39         | . var
    40         | . UNDERSCORE
    41 var: . IDENTIFIER
 
-    UNDERSCORE  shift, and go to state 40
-    SEMI        shift, and go to state 57
-    INTEGER     shift, and go to state 58
-    IDENTIFIER  shift, and go to state 45
-    FLOAT       shift, and go to state 59
+    UNDERSCORE  shift, and go to state 63
+    SEMI        shift, and go to state 64
+    INTEGER     shift, and go to state 65
+    IDENTIFIER  shift, and go to state 66
+    FLOAT       shift, and go to state 67
 
-    expr      go to state 60
-    var_list  go to state 53
-    var       go to state 54
+    expr      go to state 68
+    var_list  go to state 69
+    var       go to state 70
 
 
 State 45
 
-   41 var: IDENTIFIER .
+   63 factor: INTEGER .
+
+    $default  reduce using rule 63 (factor)
+
+
+State 46
+
+   41 var: IDENTIFIER .  [RP, COMMA, MUL, DIV, PLUS, MINUS, MOD, GE, GT, LE, LT, EQUAL, UNEQUAL, SEMI]
+   64 call: IDENTIFIER . LP args RP
+
+    LP  shift, and go to state 71
 
     $default  reduce using rule 41 (var)
 
 
-State 46
+State 47
+
+   62 factor: FLOAT .
+
+    $default  reduce using rule 62 (factor)
+
+
+State 48
 
    22 stmt: compound_stmt .
 
     $default  reduce using rule 22 (stmt)
 
 
-State 47
+State 49
 
    19 stmt_list: stmt_list stmt .
 
     $default  reduce using rule 19 (stmt_list)
 
 
-State 48
+State 50
 
    21 stmt: expr_stmt .
 
     $default  reduce using rule 21 (stmt)
 
 
-State 49
+State 51
 
    23 stmt: selection_stmt .
 
     $default  reduce using rule 23 (stmt)
 
 
-State 50
+State 52
 
    24 stmt: iteration_stmt .
 
     $default  reduce using rule 24 (stmt)
 
 
-State 51
+State 53
 
    25 stmt: return_stmt .
 
     $default  reduce using rule 25 (stmt)
 
 
-State 52
-
-   26 expr_stmt: expr . SEMI
-
-    SEMI  shift, and go to state 61
-
-
-State 53
-
-   35 expr: var_list . ASSIGN expr_list
-
-    ASSIGN  shift, and go to state 62
-
-
 State 54
 
-   38 var_list: var . COMMA var_list
-   39         | var . ASSIGN
+   60 factor: var .
 
-    COMMA   shift, and go to state 63
-    ASSIGN  shift, and go to state 64
+    $default  reduce using rule 60 (factor)
 
 
 State 55
+
+   26 expr_stmt: simple_expr . SEMI
+
+    SEMI  shift, and go to state 72
+
+
+State 56
+
+   42 simple_expr: additive_expr . relop additive_expr
+   43            | additive_expr .  [RP, COMMA, SEMI]
+   44 relop: . LE
+   45      | . LT
+   46      | . GT
+   47      | . GE
+   48      | . EQUAL
+   49      | . UNEQUAL
+   50 additive_expr: additive_expr . addop term
+   52 addop: . PLUS
+   53      | . MINUS
+
+    PLUS     shift, and go to state 73
+    MINUS    shift, and go to state 74
+    GE       shift, and go to state 75
+    GT       shift, and go to state 76
+    LE       shift, and go to state 77
+    LT       shift, and go to state 78
+    EQUAL    shift, and go to state 79
+    UNEQUAL  shift, and go to state 80
+
+    $default  reduce using rule 43 (simple_expr)
+
+    relop  go to state 81
+    addop  go to state 82
+
+
+State 57
+
+   51 additive_expr: term .  [RP, COMMA, PLUS, MINUS, GE, GT, LE, LT, EQUAL, UNEQUAL, SEMI]
+   54 term: term . mulop factor
+   56 mulop: . MUL
+   57      | . DIV
+   58      | . MOD
+
+    MUL  shift, and go to state 83
+    DIV  shift, and go to state 84
+    MOD  shift, and go to state 85
+
+    $default  reduce using rule 51 (additive_expr)
+
+    mulop  go to state 86
+
+
+State 58
+
+   55 term: factor .
+
+    $default  reduce using rule 55 (term)
+
+
+State 59
+
+   61 factor: call .
+
+    $default  reduce using rule 61 (factor)
+
+
+State 60
+
+   59 factor: LP simple_expr . RP
+
+    RP  shift, and go to state 87
+
+
+State 61
 
    28 selection_stmt: IF LP . expr RP stmt
    29               | IF LP . expr RP stmt ELSE stmt
    35 expr: . var_list ASSIGN expr_list
    38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
+   39         | . var
    40         | . UNDERSCORE
    41 var: . IDENTIFIER
 
-    UNDERSCORE  shift, and go to state 40
-    IDENTIFIER  shift, and go to state 45
+    UNDERSCORE  shift, and go to state 63
+    IDENTIFIER  shift, and go to state 66
 
-    expr      go to state 65
-    var_list  go to state 53
-    var       go to state 54
+    expr      go to state 88
+    var_list  go to state 69
+    var       go to state 70
 
 
-State 56
+State 62
 
    30 iteration_stmt: WHILE LP . expr RP stmt
    35 expr: . var_list ASSIGN expr_list
    38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
+   39         | . var
    40         | . UNDERSCORE
    41 var: . IDENTIFIER
 
-    UNDERSCORE  shift, and go to state 40
-    IDENTIFIER  shift, and go to state 45
+    UNDERSCORE  shift, and go to state 63
+    IDENTIFIER  shift, and go to state 66
 
-    expr      go to state 66
-    var_list  go to state 53
-    var       go to state 54
+    expr      go to state 89
+    var_list  go to state 69
+    var       go to state 70
 
 
-State 57
+State 63
+
+   40 var_list: UNDERSCORE .
+
+    $default  reduce using rule 40 (var_list)
+
+
+State 64
 
    31 return_stmt: RETURN SEMI .
 
     $default  reduce using rule 31 (return_stmt)
 
 
-State 58
+State 65
 
    32 return_stmt: RETURN INTEGER . SEMI
 
-    SEMI  shift, and go to state 67
+    SEMI  shift, and go to state 90
 
 
-State 59
+State 66
+
+   41 var: IDENTIFIER .
+
+    $default  reduce using rule 41 (var)
+
+
+State 67
 
    33 return_stmt: RETURN FLOAT . SEMI
 
-    SEMI  shift, and go to state 68
+    SEMI  shift, and go to state 91
 
 
-State 60
+State 68
 
    34 return_stmt: RETURN expr . SEMI
 
-    SEMI  shift, and go to state 69
+    SEMI  shift, and go to state 92
 
 
-State 61
+State 69
 
-   26 expr_stmt: expr SEMI .
+   35 expr: var_list . ASSIGN expr_list
+
+    ASSIGN  shift, and go to state 93
+
+
+State 70
+
+   38 var_list: var . COMMA var_list
+   39         | var .  [ASSIGN]
+
+    COMMA  shift, and go to state 94
+
+    $default  reduce using rule 39 (var_list)
+
+
+State 71
+
+   41 var: . IDENTIFIER
+   42 simple_expr: . additive_expr relop additive_expr
+   43            | . additive_expr
+   50 additive_expr: . additive_expr addop term
+   51              | . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
+   64     | IDENTIFIER LP . args RP
+   65 args: . arg_list
+   66     | . %empty  [RP]
+   67 arg_list: . arg_list COMMA simple_expr
+   68         | . simple_expr
+
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
+
+    $default  reduce using rule 66 (args)
+
+    var            go to state 54
+    simple_expr    go to state 95
+    additive_expr  go to state 56
+    term           go to state 57
+    factor         go to state 58
+    call           go to state 59
+    args           go to state 96
+    arg_list       go to state 97
+
+
+State 72
+
+   26 expr_stmt: simple_expr SEMI .
 
     $default  reduce using rule 26 (expr_stmt)
 
 
-State 62
+State 73
+
+   52 addop: PLUS .
+
+    $default  reduce using rule 52 (addop)
+
+
+State 74
+
+   53 addop: MINUS .
+
+    $default  reduce using rule 53 (addop)
+
+
+State 75
+
+   47 relop: GE .
+
+    $default  reduce using rule 47 (relop)
+
+
+State 76
+
+   46 relop: GT .
+
+    $default  reduce using rule 46 (relop)
+
+
+State 77
+
+   44 relop: LE .
+
+    $default  reduce using rule 44 (relop)
+
+
+State 78
+
+   45 relop: LT .
+
+    $default  reduce using rule 45 (relop)
+
+
+State 79
+
+   48 relop: EQUAL .
+
+    $default  reduce using rule 48 (relop)
+
+
+State 80
+
+   49 relop: UNEQUAL .
+
+    $default  reduce using rule 49 (relop)
+
+
+State 81
+
+   41 var: . IDENTIFIER
+   42 simple_expr: additive_expr relop . additive_expr
+   50 additive_expr: . additive_expr addop term
+   51              | . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
+
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
+
+    var            go to state 54
+    additive_expr  go to state 98
+    term           go to state 57
+    factor         go to state 58
+    call           go to state 59
+
+
+State 82
+
+   41 var: . IDENTIFIER
+   50 additive_expr: additive_expr addop . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
+
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
+
+    var     go to state 54
+    term    go to state 99
+    factor  go to state 58
+    call    go to state 59
+
+
+State 83
+
+   56 mulop: MUL .
+
+    $default  reduce using rule 56 (mulop)
+
+
+State 84
+
+   57 mulop: DIV .
+
+    $default  reduce using rule 57 (mulop)
+
+
+State 85
+
+   58 mulop: MOD .
+
+    $default  reduce using rule 58 (mulop)
+
+
+State 86
+
+   41 var: . IDENTIFIER
+   54 term: term mulop . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
+
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
+
+    var     go to state 54
+    factor  go to state 100
+    call    go to state 59
+
+
+State 87
+
+   59 factor: LP simple_expr RP .
+
+    $default  reduce using rule 59 (factor)
+
+
+State 88
+
+   28 selection_stmt: IF LP expr . RP stmt
+   29               | IF LP expr . RP stmt ELSE stmt
+
+    RP  shift, and go to state 101
+
+
+State 89
+
+   30 iteration_stmt: WHILE LP expr . RP stmt
+
+    RP  shift, and go to state 102
+
+
+State 90
+
+   32 return_stmt: RETURN INTEGER SEMI .
+
+    $default  reduce using rule 32 (return_stmt)
+
+
+State 91
+
+   33 return_stmt: RETURN FLOAT SEMI .
+
+    $default  reduce using rule 33 (return_stmt)
+
+
+State 92
+
+   34 return_stmt: RETURN expr SEMI .
+
+    $default  reduce using rule 34 (return_stmt)
+
+
+State 93
 
    35 expr: var_list ASSIGN . expr_list
    36 expr_list: . expr_list COMMA simple_expr
@@ -875,226 +1247,101 @@ State 62
    61       | . call
    62       | . FLOAT
    63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
+   64 call: . IDENTIFIER LP args RP
 
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
 
-    expr_list      go to state 74
-    var            go to state 75
-    simple_expr    go to state 76
-    additive_expr  go to state 77
-    term           go to state 78
-    factor         go to state 79
-    call           go to state 80
+    expr_list      go to state 103
+    var            go to state 54
+    simple_expr    go to state 104
+    additive_expr  go to state 56
+    term           go to state 57
+    factor         go to state 58
+    call           go to state 59
 
 
-State 63
+State 94
 
    38 var_list: . var COMMA var_list
    38         | var COMMA . var_list
-   39         | . var ASSIGN
+   39         | . var
    40         | . UNDERSCORE
    41 var: . IDENTIFIER
 
-    UNDERSCORE  shift, and go to state 40
-    IDENTIFIER  shift, and go to state 45
+    UNDERSCORE  shift, and go to state 63
+    IDENTIFIER  shift, and go to state 66
 
-    var_list  go to state 81
-    var       go to state 54
-
-
-State 64
-
-   39 var_list: var ASSIGN .
-
-    $default  reduce using rule 39 (var_list)
+    var_list  go to state 105
+    var       go to state 70
 
 
-State 65
+State 95
 
-   28 selection_stmt: IF LP expr . RP stmt
-   29               | IF LP expr . RP stmt ELSE stmt
+   68 arg_list: simple_expr .
 
-    RP  shift, and go to state 82
-
-
-State 66
-
-   30 iteration_stmt: WHILE LP expr . RP stmt
-
-    RP  shift, and go to state 83
+    $default  reduce using rule 68 (arg_list)
 
 
-State 67
+State 96
 
-   32 return_stmt: RETURN INTEGER SEMI .
+   64 call: IDENTIFIER LP args . RP
 
-    $default  reduce using rule 32 (return_stmt)
-
-
-State 68
-
-   33 return_stmt: RETURN FLOAT SEMI .
-
-    $default  reduce using rule 33 (return_stmt)
+    RP  shift, and go to state 106
 
 
-State 69
+State 97
 
-   34 return_stmt: RETURN expr SEMI .
+   65 args: arg_list .  [RP]
+   67 arg_list: arg_list . COMMA simple_expr
 
-    $default  reduce using rule 34 (return_stmt)
+    COMMA  shift, and go to state 107
 
-
-State 70
-
-   41 var: . IDENTIFIER
-   42 simple_expr: . additive_expr relop additive_expr
-   43            | . additive_expr
-   50 additive_expr: . additive_expr addop term
-   51              | . term
-   54 term: . term mulop factor
-   55     | . factor
-   59 factor: . LP simple_expr RP
-   59       | LP . simple_expr RP
-   60       | . var
-   61       | . call
-   62       | . FLOAT
-   63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
-
-    var            go to state 75
-    simple_expr    go to state 84
-    additive_expr  go to state 77
-    term           go to state 78
-    factor         go to state 79
-    call           go to state 80
+    $default  reduce using rule 65 (args)
 
 
-State 71
+State 98
 
-   63 factor: INTEGER .
-
-    $default  reduce using rule 63 (factor)
-
-
-State 72
-
-   41 var: IDENTIFIER .  [RP, COMMA, MUL, DIV, PLUS, MINUS, MOD, GE, GT, LE, LT, EQUAL, UNEQUAL, SEMI]
-   64 call: IDENTIFIER . LP args RP SEMI
-
-    LP  shift, and go to state 85
-
-    $default  reduce using rule 41 (var)
-
-
-State 73
-
-   62 factor: FLOAT .
-
-    $default  reduce using rule 62 (factor)
-
-
-State 74
-
-   35 expr: var_list ASSIGN expr_list .  [RP, SEMI]
-   36 expr_list: expr_list . COMMA simple_expr
-
-    COMMA  shift, and go to state 86
-
-    $default  reduce using rule 35 (expr)
-
-
-State 75
-
-   60 factor: var .
-
-    $default  reduce using rule 60 (factor)
-
-
-State 76
-
-   37 expr_list: simple_expr .
-
-    $default  reduce using rule 37 (expr_list)
-
-
-State 77
-
-   42 simple_expr: additive_expr . relop additive_expr
-   43            | additive_expr .  [RP, COMMA, SEMI]
-   44 relop: . LE
-   45      | . LT
-   46      | . GT
-   47      | . GE
-   48      | . EQUAL
-   49      | . UNEQUAL
+   42 simple_expr: additive_expr relop additive_expr .  [RP, COMMA, SEMI]
    50 additive_expr: additive_expr . addop term
    52 addop: . PLUS
    53      | . MINUS
 
-    PLUS     shift, and go to state 87
-    MINUS    shift, and go to state 88
-    GE       shift, and go to state 89
-    GT       shift, and go to state 90
-    LE       shift, and go to state 91
-    LT       shift, and go to state 92
-    EQUAL    shift, and go to state 93
-    UNEQUAL  shift, and go to state 94
+    PLUS   shift, and go to state 73
+    MINUS  shift, and go to state 74
 
-    $default  reduce using rule 43 (simple_expr)
+    $default  reduce using rule 42 (simple_expr)
 
-    relop  go to state 95
-    addop  go to state 96
+    addop  go to state 82
 
 
-State 78
+State 99
 
-   51 additive_expr: term .  [RP, COMMA, PLUS, MINUS, GE, GT, LE, LT, EQUAL, UNEQUAL, SEMI]
+   50 additive_expr: additive_expr addop term .  [RP, COMMA, PLUS, MINUS, GE, GT, LE, LT, EQUAL, UNEQUAL, SEMI]
    54 term: term . mulop factor
    56 mulop: . MUL
    57      | . DIV
    58      | . MOD
 
-    MUL  shift, and go to state 97
-    DIV  shift, and go to state 98
-    MOD  shift, and go to state 99
+    MUL  shift, and go to state 83
+    DIV  shift, and go to state 84
+    MOD  shift, and go to state 85
 
-    $default  reduce using rule 51 (additive_expr)
+    $default  reduce using rule 50 (additive_expr)
 
-    mulop  go to state 100
-
-
-State 79
-
-   55 term: factor .
-
-    $default  reduce using rule 55 (term)
+    mulop  go to state 86
 
 
-State 80
+State 100
 
-   61 factor: call .
+   54 term: term mulop factor .
 
-    $default  reduce using rule 61 (factor)
-
-
-State 81
-
-   38 var_list: var COMMA var_list .
-
-    $default  reduce using rule 38 (var_list)
+    $default  reduce using rule 54 (term)
 
 
-State 82
+State 101
 
    16 compound_stmt: . LCP local_decls stmt_list RCP
    21 stmt: . expr_stmt
@@ -1102,7 +1349,7 @@ State 82
    23     | . selection_stmt
    24     | . iteration_stmt
    25     | . return_stmt
-   26 expr_stmt: . expr SEMI
+   26 expr_stmt: . simple_expr SEMI
    27          | . SEMI
    28 selection_stmt: . IF LP expr RP stmt
    28               | IF LP expr RP . stmt
@@ -1113,32 +1360,45 @@ State 82
    32            | . RETURN INTEGER SEMI
    33            | . RETURN FLOAT SEMI
    34            | . RETURN expr SEMI
-   35 expr: . var_list ASSIGN expr_list
-   38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
-   40         | . UNDERSCORE
    41 var: . IDENTIFIER
+   42 simple_expr: . additive_expr relop additive_expr
+   43            | . additive_expr
+   50 additive_expr: . additive_expr addop term
+   51              | . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
 
+    LP          shift, and go to state 39
     LCP         shift, and go to state 34
-    UNDERSCORE  shift, and go to state 40
     SEMI        shift, and go to state 41
     IF          shift, and go to state 42
     WHILE       shift, and go to state 43
     RETURN      shift, and go to state 44
-    IDENTIFIER  shift, and go to state 45
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
 
-    compound_stmt   go to state 46
-    stmt            go to state 101
-    expr_stmt       go to state 48
-    selection_stmt  go to state 49
-    iteration_stmt  go to state 50
-    return_stmt     go to state 51
-    expr            go to state 52
-    var_list        go to state 53
+    compound_stmt   go to state 48
+    stmt            go to state 108
+    expr_stmt       go to state 50
+    selection_stmt  go to state 51
+    iteration_stmt  go to state 52
+    return_stmt     go to state 53
     var             go to state 54
+    simple_expr     go to state 55
+    additive_expr   go to state 56
+    term            go to state 57
+    factor          go to state 58
+    call            go to state 59
 
 
-State 83
+State 102
 
    16 compound_stmt: . LCP local_decls stmt_list RCP
    21 stmt: . expr_stmt
@@ -1146,7 +1406,7 @@ State 83
    23     | . selection_stmt
    24     | . iteration_stmt
    25     | . return_stmt
-   26 expr_stmt: . expr SEMI
+   26 expr_stmt: . simple_expr SEMI
    27          | . SEMI
    28 selection_stmt: . IF LP expr RP stmt
    29               | . IF LP expr RP stmt ELSE stmt
@@ -1156,39 +1416,76 @@ State 83
    32            | . RETURN INTEGER SEMI
    33            | . RETURN FLOAT SEMI
    34            | . RETURN expr SEMI
-   35 expr: . var_list ASSIGN expr_list
-   38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
-   40         | . UNDERSCORE
    41 var: . IDENTIFIER
+   42 simple_expr: . additive_expr relop additive_expr
+   43            | . additive_expr
+   50 additive_expr: . additive_expr addop term
+   51              | . term
+   54 term: . term mulop factor
+   55     | . factor
+   59 factor: . LP simple_expr RP
+   60       | . var
+   61       | . call
+   62       | . FLOAT
+   63       | . INTEGER
+   64 call: . IDENTIFIER LP args RP
 
+    LP          shift, and go to state 39
     LCP         shift, and go to state 34
-    UNDERSCORE  shift, and go to state 40
     SEMI        shift, and go to state 41
     IF          shift, and go to state 42
     WHILE       shift, and go to state 43
     RETURN      shift, and go to state 44
-    IDENTIFIER  shift, and go to state 45
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
 
-    compound_stmt   go to state 46
-    stmt            go to state 102
-    expr_stmt       go to state 48
-    selection_stmt  go to state 49
-    iteration_stmt  go to state 50
-    return_stmt     go to state 51
-    expr            go to state 52
-    var_list        go to state 53
+    compound_stmt   go to state 48
+    stmt            go to state 109
+    expr_stmt       go to state 50
+    selection_stmt  go to state 51
+    iteration_stmt  go to state 52
+    return_stmt     go to state 53
     var             go to state 54
+    simple_expr     go to state 55
+    additive_expr   go to state 56
+    term            go to state 57
+    factor          go to state 58
+    call            go to state 59
 
 
-State 84
+State 103
 
-   59 factor: LP simple_expr . RP
+   35 expr: var_list ASSIGN expr_list .  [RP, SEMI]
+   36 expr_list: expr_list . COMMA simple_expr
 
-    RP  shift, and go to state 103
+    COMMA  shift, and go to state 110
+
+    $default  reduce using rule 35 (expr)
 
 
-State 85
+State 104
+
+   37 expr_list: simple_expr .
+
+    $default  reduce using rule 37 (expr_list)
+
+
+State 105
+
+   38 var_list: var COMMA var_list .
+
+    $default  reduce using rule 38 (var_list)
+
+
+State 106
+
+   64 call: IDENTIFIER LP args RP .
+
+    $default  reduce using rule 64 (call)
+
+
+State 107
 
    41 var: . IDENTIFIER
    42 simple_expr: . additive_expr relop additive_expr
@@ -1202,31 +1499,42 @@ State 85
    61       | . call
    62       | . FLOAT
    63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-   64     | IDENTIFIER LP . args RP SEMI
-   65 args: . arg_list
-   66     | . %empty  [RP]
-   67 arg_list: . arg_list COMMA simple_expr
-   68         | . simple_expr
+   64 call: . IDENTIFIER LP args RP
+   67 arg_list: arg_list COMMA . simple_expr
 
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
 
-    $default  reduce using rule 66 (args)
-
-    var            go to state 75
-    simple_expr    go to state 104
-    additive_expr  go to state 77
-    term           go to state 78
-    factor         go to state 79
-    call           go to state 80
-    args           go to state 105
-    arg_list       go to state 106
+    var            go to state 54
+    simple_expr    go to state 111
+    additive_expr  go to state 56
+    term           go to state 57
+    factor         go to state 58
+    call           go to state 59
 
 
-State 86
+State 108
+
+   28 selection_stmt: IF LP expr RP stmt .  [LP, LCP, RCP, SEMI, IF, WHILE, RETURN, INTEGER, IDENTIFIER, FLOAT]
+   29               | IF LP expr RP stmt . ELSE stmt
+
+    ELSE  shift, and go to state 112
+
+    $default  reduce using rule 28 (selection_stmt)
+
+    Conflict between rule 28 and token ELSE resolved as shift (LOWER_THAN_ELSE < ELSE).
+
+
+State 109
+
+   30 iteration_stmt: WHILE LP expr RP stmt .
+
+    $default  reduce using rule 30 (iteration_stmt)
+
+
+State 110
 
    36 expr_list: expr_list COMMA . simple_expr
    41 var: . IDENTIFIER
@@ -1241,267 +1549,29 @@ State 86
    61       | . call
    62       | . FLOAT
    63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
-
-    var            go to state 75
-    simple_expr    go to state 107
-    additive_expr  go to state 77
-    term           go to state 78
-    factor         go to state 79
-    call           go to state 80
-
-
-State 87
-
-   52 addop: PLUS .
-
-    $default  reduce using rule 52 (addop)
-
-
-State 88
-
-   53 addop: MINUS .
-
-    $default  reduce using rule 53 (addop)
-
-
-State 89
-
-   47 relop: GE .
-
-    $default  reduce using rule 47 (relop)
-
-
-State 90
-
-   46 relop: GT .
-
-    $default  reduce using rule 46 (relop)
-
-
-State 91
-
-   44 relop: LE .
-
-    $default  reduce using rule 44 (relop)
-
-
-State 92
-
-   45 relop: LT .
-
-    $default  reduce using rule 45 (relop)
-
-
-State 93
-
-   48 relop: EQUAL .
-
-    $default  reduce using rule 48 (relop)
-
-
-State 94
-
-   49 relop: UNEQUAL .
-
-    $default  reduce using rule 49 (relop)
-
-
-State 95
-
-   41 var: . IDENTIFIER
-   42 simple_expr: additive_expr relop . additive_expr
-   50 additive_expr: . additive_expr addop term
-   51              | . term
-   54 term: . term mulop factor
-   55     | . factor
-   59 factor: . LP simple_expr RP
-   60       | . var
-   61       | . call
-   62       | . FLOAT
-   63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
-
-    var            go to state 75
-    additive_expr  go to state 108
-    term           go to state 78
-    factor         go to state 79
-    call           go to state 80
-
-
-State 96
-
-   41 var: . IDENTIFIER
-   50 additive_expr: additive_expr addop . term
-   54 term: . term mulop factor
-   55     | . factor
-   59 factor: . LP simple_expr RP
-   60       | . var
-   61       | . call
-   62       | . FLOAT
-   63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
-
-    var     go to state 75
-    term    go to state 109
-    factor  go to state 79
-    call    go to state 80
-
-
-State 97
-
-   56 mulop: MUL .
-
-    $default  reduce using rule 56 (mulop)
-
-
-State 98
-
-   57 mulop: DIV .
-
-    $default  reduce using rule 57 (mulop)
-
-
-State 99
-
-   58 mulop: MOD .
-
-    $default  reduce using rule 58 (mulop)
-
-
-State 100
-
-   41 var: . IDENTIFIER
-   54 term: term mulop . factor
-   59 factor: . LP simple_expr RP
-   60       | . var
-   61       | . call
-   62       | . FLOAT
-   63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
-
-    var     go to state 75
-    factor  go to state 110
-    call    go to state 80
-
-
-State 101
-
-   28 selection_stmt: IF LP expr RP stmt .  [LCP, RCP, UNDERSCORE, SEMI, IF, WHILE, RETURN, IDENTIFIER]
-   29               | IF LP expr RP stmt . ELSE stmt
-
-    ELSE  shift, and go to state 111
-
-    $default  reduce using rule 28 (selection_stmt)
-
-    Conflict between rule 28 and token ELSE resolved as shift (LOWER_THAN_ELSE < ELSE).
-
-
-State 102
-
-   30 iteration_stmt: WHILE LP expr RP stmt .
-
-    $default  reduce using rule 30 (iteration_stmt)
-
-
-State 103
-
-   59 factor: LP simple_expr RP .
-
-    $default  reduce using rule 59 (factor)
-
-
-State 104
-
-   68 arg_list: simple_expr .
-
-    $default  reduce using rule 68 (arg_list)
-
-
-State 105
-
-   64 call: IDENTIFIER LP args . RP SEMI
-
-    RP  shift, and go to state 112
-
-
-State 106
-
-   65 args: arg_list .  [RP]
-   67 arg_list: arg_list . COMMA simple_expr
-
-    COMMA  shift, and go to state 113
-
-    $default  reduce using rule 65 (args)
-
-
-State 107
-
-   36 expr_list: expr_list COMMA simple_expr .
-
-    $default  reduce using rule 36 (expr_list)
-
-
-State 108
-
-   42 simple_expr: additive_expr relop additive_expr .  [RP, COMMA, SEMI]
-   50 additive_expr: additive_expr . addop term
-   52 addop: . PLUS
-   53      | . MINUS
-
-    PLUS   shift, and go to state 87
-    MINUS  shift, and go to state 88
-
-    $default  reduce using rule 42 (simple_expr)
-
-    addop  go to state 96
-
-
-State 109
-
-   50 additive_expr: additive_expr addop term .  [RP, COMMA, PLUS, MINUS, GE, GT, LE, LT, EQUAL, UNEQUAL, SEMI]
-   54 term: term . mulop factor
-   56 mulop: . MUL
-   57      | . DIV
-   58      | . MOD
-
-    MUL  shift, and go to state 97
-    DIV  shift, and go to state 98
-    MOD  shift, and go to state 99
-
-    $default  reduce using rule 50 (additive_expr)
-
-    mulop  go to state 100
-
-
-State 110
-
-   54 term: term mulop factor .
-
-    $default  reduce using rule 54 (term)
+   64 call: . IDENTIFIER LP args RP
+
+    LP          shift, and go to state 39
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
+
+    var            go to state 54
+    simple_expr    go to state 113
+    additive_expr  go to state 56
+    term           go to state 57
+    factor         go to state 58
+    call           go to state 59
 
 
 State 111
+
+   67 arg_list: arg_list COMMA simple_expr .
+
+    $default  reduce using rule 67 (arg_list)
+
+
+State 112
 
    16 compound_stmt: . LCP local_decls stmt_list RCP
    21 stmt: . expr_stmt
@@ -1509,7 +1579,7 @@ State 111
    23     | . selection_stmt
    24     | . iteration_stmt
    25     | . return_stmt
-   26 expr_stmt: . expr SEMI
+   26 expr_stmt: . simple_expr SEMI
    27          | . SEMI
    28 selection_stmt: . IF LP expr RP stmt
    29               | . IF LP expr RP stmt ELSE stmt
@@ -1519,40 +1589,6 @@ State 111
    32            | . RETURN INTEGER SEMI
    33            | . RETURN FLOAT SEMI
    34            | . RETURN expr SEMI
-   35 expr: . var_list ASSIGN expr_list
-   38 var_list: . var COMMA var_list
-   39         | . var ASSIGN
-   40         | . UNDERSCORE
-   41 var: . IDENTIFIER
-
-    LCP         shift, and go to state 34
-    UNDERSCORE  shift, and go to state 40
-    SEMI        shift, and go to state 41
-    IF          shift, and go to state 42
-    WHILE       shift, and go to state 43
-    RETURN      shift, and go to state 44
-    IDENTIFIER  shift, and go to state 45
-
-    compound_stmt   go to state 46
-    stmt            go to state 114
-    expr_stmt       go to state 48
-    selection_stmt  go to state 49
-    iteration_stmt  go to state 50
-    return_stmt     go to state 51
-    expr            go to state 52
-    var_list        go to state 53
-    var             go to state 54
-
-
-State 112
-
-   64 call: IDENTIFIER LP args RP . SEMI
-
-    SEMI  shift, and go to state 115
-
-
-State 113
-
    41 var: . IDENTIFIER
    42 simple_expr: . additive_expr relop additive_expr
    43            | . additive_expr
@@ -1565,20 +1601,37 @@ State 113
    61       | . call
    62       | . FLOAT
    63       | . INTEGER
-   64 call: . IDENTIFIER LP args RP SEMI
-   67 arg_list: arg_list COMMA . simple_expr
+   64 call: . IDENTIFIER LP args RP
 
-    LP          shift, and go to state 70
-    INTEGER     shift, and go to state 71
-    IDENTIFIER  shift, and go to state 72
-    FLOAT       shift, and go to state 73
+    LP          shift, and go to state 39
+    LCP         shift, and go to state 34
+    SEMI        shift, and go to state 41
+    IF          shift, and go to state 42
+    WHILE       shift, and go to state 43
+    RETURN      shift, and go to state 44
+    INTEGER     shift, and go to state 45
+    IDENTIFIER  shift, and go to state 46
+    FLOAT       shift, and go to state 47
 
-    var            go to state 75
-    simple_expr    go to state 116
-    additive_expr  go to state 77
-    term           go to state 78
-    factor         go to state 79
-    call           go to state 80
+    compound_stmt   go to state 48
+    stmt            go to state 114
+    expr_stmt       go to state 50
+    selection_stmt  go to state 51
+    iteration_stmt  go to state 52
+    return_stmt     go to state 53
+    var             go to state 54
+    simple_expr     go to state 55
+    additive_expr   go to state 56
+    term            go to state 57
+    factor          go to state 58
+    call            go to state 59
+
+
+State 113
+
+   36 expr_list: expr_list COMMA simple_expr .
+
+    $default  reduce using rule 36 (expr_list)
 
 
 State 114
@@ -1586,17 +1639,3 @@ State 114
    29 selection_stmt: IF LP expr RP stmt ELSE stmt .
 
     $default  reduce using rule 29 (selection_stmt)
-
-
-State 115
-
-   64 call: IDENTIFIER LP args RP SEMI .
-
-    $default  reduce using rule 64 (call)
-
-
-State 116
-
-   67 arg_list: arg_list COMMA simple_expr .
-
-    $default  reduce using rule 67 (arg_list)

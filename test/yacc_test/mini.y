@@ -131,7 +131,7 @@ stmt:
     | return_stmt                       { printf("stmt -> return-stmt\n"); }
                                         ;
 expr_stmt:
-    expr SEMI                           { printf("expr_stmt -> expr SEMI\n"); }
+    simple_expr SEMI                    { printf("expr_stmt -> expr SEMI\n"); }
     | SEMI                              { printf("expr_stmt -> SEMI\n"); }
                                         ;
 selection_stmt:
@@ -156,7 +156,7 @@ expr_list:
                                         ;
 var_list:
     var COMMA var_list                  { printf("var_list -> var_list, var\n"); }
-    | var ASSIGN                        { printf("var_list -> var\n"); }
+    | var                               { printf("var_list -> var\n"); }
     | UNDERSCORE                        { printf("var_list -> _\n"); }
                                         ;
 var:
@@ -199,7 +199,7 @@ factor:
     | INTEGER                           { printf("factor -> INTEGER\n"); }
                                         ;
 call:
-    IDENTIFIER LP args RP SEMI          { printf("call -> identifier LP args RP\n"); }
+    IDENTIFIER LP args RP               { printf("call -> identifier LP args RP\n"); }
                                         ;
 args:
     arg_list                            { printf("args -> arg_list\n"); }
