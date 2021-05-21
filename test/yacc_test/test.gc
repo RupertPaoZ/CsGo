@@ -1,6 +1,6 @@
 func main(a int)(ret int)
 {
-    float a1;
-    a1 = 1.0;
+    foo(1.0, 2, arr);
+
     return 0;
 }

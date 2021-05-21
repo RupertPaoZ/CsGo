@@ -10,7 +10,7 @@ CXXFLAGS = -std=c++14 $(NO_WARNING)
 all: mini_test
 
 parser.cpp: mini.y
-	bison -d -o parser.cpp mini.y
+	bison -d -o parser.cpp mini.y --report=all
 
 parser.hpp: parser.cpp
 

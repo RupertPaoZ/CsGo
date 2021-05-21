@@ -116,7 +116,7 @@ compound_stmt:
     LCP local_decls stmt_list RCP       { printf("{local_decls stmt_list}\n"); }
                                         ;
 local_decls:
-    local_decls var_decl                { printf("local_decls var_decl\n"); }
+    local_decls var_decl                { printf("local_decls -> local_decls var_decl\n"); }
     | /* empty */                          
                                         ;
 stmt_list:
@@ -144,18 +144,19 @@ iteration_stmt:
 return_stmt:
     RETURN SEMI                         { printf("return_stmt -> return;\n"); }
     | RETURN INTEGER SEMI               { printf("return_stmt -> return 0;\n"); }
+    | RETURN FLOAT SEMI                 { printf("return_stmt -> return float;\n"); }
     | RETURN expr SEMI                  { printf("return expr;\n"); }
                                         ;
 expr:
-    var_list ASSIGN expr_list           { printf("expr -> var_list ASSIGN expr_list\n"); }
+    var_list ASSIGN expr_list                  { printf("expr -> var_list ASSIGN expr_list\n"); }
                                         ;
 expr_list:
     expr_list COMMA simple_expr         { printf("expr -> expr_list, simple_expr\n"); }
     | simple_expr                       { printf("expr_list -> simple_expr\n"); }
                                         ;
 var_list:
-    var_list COMMA var                  { printf("var_list -> var_list, var\n"); }
-    | var                               { printf("var_list -> var\n"); }
+    var COMMA var_list                  { printf("var_list -> var_list, var\n"); }
+    | var ASSIGN                        { printf("var_list -> var\n"); }
     | UNDERSCORE                        { printf("var_list -> _\n"); }
                                         ;
 var:
@@ -191,7 +192,7 @@ mulop:
     | MOD                               { printf("mulop -> MOD\n"); }
                                         ;
 factor:
-    LP expr RP                          { printf("factor -> LP expr RP\n"); }
+    LP simple_expr RP                   { printf("factor -> LP expr RP\n"); }
     | var                               { printf("factor -> var\n"); }
     | call                              { printf("factor -> call\n"); }
     | FLOAT                             { /* be careful */ printf("factor -> NUM\n"); }
@@ -205,8 +206,8 @@ args:
     | /* empty */                       
                                         ;
 arg_list:
-    arg_list COMMA expr                 { printf("arg-list -> arg_list, expr\n"); }
-    | expr                              { printf("arg-list -> expr\n"); }
+    arg_list COMMA simple_expr          { printf("arg-list -> arg_list, expr\n"); }
+    | simple_expr                       { printf("arg-list -> simple_expr\n"); }
                                         ;
 %%
 
