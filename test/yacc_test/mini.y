@@ -199,7 +199,7 @@ factor:
     | INTEGER                           { printf("factor -> INTEGER\n"); }
                                         ;
 call:
-    IDENTIFIER LP args RP               { printf("call -> identifier LP args RP\n"); }
+    IDENTIFIER LP args RP SEMI          { printf("call -> identifier LP args RP\n"); }
                                         ;
 args:
     arg_list                            { printf("args -> arg_list\n"); }
