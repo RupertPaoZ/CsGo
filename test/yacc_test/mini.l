@@ -39,7 +39,6 @@ extern "C" int yywrap() {return 1;}
 "while"                             {return WHILE; }
 "func"                              {return FUNC; }
 "return"                            {return RETURN; }
-"call"                              {return CALL; }
 "int"|"float"|"void"                {
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return SYS_TYPE;
