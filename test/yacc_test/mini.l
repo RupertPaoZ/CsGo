@@ -47,7 +47,7 @@ extern "C" int yywrap() {return 1;}
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return IDENTIFIER; 
                                     } 
-[0-9]+\.[0-9]+                      { 
+([0-9]+\.[0-9]*)([eE][-+]?[0-9]+)?  { 
                                         float ftmp;
                                         sscanf(yytext, "%f", &ftmp);
                                         yylval.fVal = ftmp;

@@ -30,7 +30,7 @@ int yylex();
         SEMI
         AND OR NOT
         IF ELSE WHILE FOR
-        FUNC RETURN CALL
+        FUNC RETURN
 
 %token<iVal> INTEGER
 %token<sVal> IDENTIFIER SYS_TYPE VOID
@@ -91,7 +91,7 @@ decl:
                                         ;
 var_decl:
     type_specifier IDENTIFIER SEMI      { printf("var_decl -> type_specifier identifier SEMI\n"); }
-    | type_specifier IDENTIFIER LB INTEGER RB {printf("var_decl -> type_specifier identifier LB NUM RB\n"); }
+    | type_specifier IDENTIFIER LB INTEGER RB SEMI {printf("var_decl -> type_specifier identifier LB NUM RB\n"); }
                                         ;
 type_specifier:
     SYS_TYPE                            { printf("type_specifier -> SYS_TYPE\n"); }
