@@ -149,7 +149,7 @@ return_stmt:
     | RETURN expr SEMI                  { printf("return expr;\n"); }
                                         ;
 function_stmt:
-    call                                { printf("function_stmt -> call\n"); }
+    call SEMI                           { printf("function_stmt -> call\n"); }
                                         ;
 expr:
     var_list ASSIGN expr_list           { printf("expr -> var_list ASSIGN expr_list\n"); }
@@ -199,6 +199,7 @@ mulop:
 factor:
     LP simple_expr RP                   { printf("factor -> LP expr RP\n"); }
     | var                               { printf("factor -> var\n"); }
+    | call                              { printf("factor -> call\n"); }
     | FLOAT                             { /* be careful */ printf("factor -> NUM\n"); }
     | INTEGER                           { printf("factor -> INTEGER\n"); }
                                         ;

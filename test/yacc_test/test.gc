@@ -1,3 +1,13 @@
+func foo(f float, i int, arr[] int)(ret int)
+{
+    return 0;
+}
+
+func empty(void)(void)
+{
+    return;
+}
+
 func main(a int)(ret int)
 {
     int a;
@@ -6,7 +16,9 @@ func main(a int)(ret int)
     a = 1;
     a, c = 1, 2;
     arr[0], arr[1], arr[2] = 1.0, 2.0, 3.0;
-    foo(1.0, 2, arr);
+    c = foo(1.0, 2, arr);
+    empty();
+
     if (a == 1)
     {
         int b;

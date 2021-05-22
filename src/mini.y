@@ -199,6 +199,7 @@ mulop:
 factor:
     LP simple_expr RP                   { printf("factor -> LP expr RP\n"); }
     | var                               { printf("factor -> var\n"); }
+    | call                              { printf("factor -> call\n"); }
     | FLOAT                             { /* be careful */ printf("factor -> NUM\n"); }
     | INTEGER                           { printf("factor -> INTEGER\n"); }
                                         ;
