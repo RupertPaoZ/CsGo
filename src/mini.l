@@ -54,7 +54,7 @@ extern "C" int yywrap() {return 1;}
                                         return FLOAT; 
                                     }
 [0-9]+                              {
-                                        int itmp;                                                           double tmp;
+                                        int itmp;
                                         sscanf(yytext, "%d", &itmp);
                                         yylval.iVal = itmp; 
                                         return INTEGER; 
