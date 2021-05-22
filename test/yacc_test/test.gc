@@ -2,8 +2,10 @@ func main(a int)(ret int)
 {
     int a;
     int c;
+    float arr[3];
     a = 1;
     a, c = 1, 2;
+    arr[0], arr[1], arr[2] = 1.0, 2.0, 3.0;
     foo(1.0, 2, arr);
     if (a == 1)
     {

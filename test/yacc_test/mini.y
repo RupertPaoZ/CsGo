@@ -165,6 +165,7 @@ var_list:
                                         ;
 var:
     IDENTIFIER                          { printf("var -> IDENTIFIER\n");}
+    | IDENTIFIER LB simple_expr RB      { printf("var -> IDENTIFIER LB simple_expr RB\n"); }
                                         ;
 simple_expr:
     additive_expr relop additive_expr   { printf("simple_expr -> additive_expr relop additive_expr\n"); }
