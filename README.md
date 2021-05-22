@@ -20,4 +20,22 @@
 
   ​       如果出错，50%的概率是bison写的不对，50%的概率是test.gc语法不对。
 
-  继续完备中...
+5/22 更新：
+- 修复语法问题。添加了`function_stmt`一行：
+  ~~~
+  stmt:
+    expr_stmt                           { printf("stmt -> expr_stmt\n"); }
+    | compound_stmt                     { printf("stmt -> compound_stmt\n"); }
+    | selection_stmt                    { printf("stmt -> selection_stmt\n"); }
+    | iteration_stmt                    { printf("stmt -> iteration-stmt\n"); }
+    | return_stmt                       { printf("stmt -> return-stmt\n"); }
+    | function_stmt                     { printf("stmt -> function-stmt\n"); }
+  
+  function_stmt:
+    call
+  ~~~
+  修改后，函数调用，if、while语句均可正常执行。
+- 接下来的可能改进：
+  - for语句
+  - 数组
+  - 声明处赋值
