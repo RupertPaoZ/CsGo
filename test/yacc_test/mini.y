@@ -113,15 +113,15 @@ param:
     | IDENTIFIER LB RB type_specifier   { printf("param -> identifier [] type_specifier\n"); }
                                         ;
 compound_stmt:
-    LCP local_decls stmt_list RCP       { printf("{local_decls stmt_list}\n"); }
+    LCP local_decls stmt_list RCP       { printf("compound_stmt -> {local_decls stmt_list}\n"); }
                                         ;
 local_decls:
     local_decls var_decl                { printf("local_decls -> local_decls var_decl\n"); }
     | /* empty */                          
                                         ;
 stmt_list:
-    stmt_list stmt                      { printf("stmt_list stmt\n"); }
-    | /* empty */
+    stmt_list stmt                      { printf("stmt_list -> stmt_list stmt\n"); }
+    | /* empty */                       { printf("stmt_list -> empty\n"); }
                                         ;
 stmt:
     expr_stmt                           { printf("stmt -> expr_stmt\n"); }
@@ -131,15 +131,15 @@ stmt:
     | return_stmt                       { printf("stmt -> return-stmt\n"); }
                                         ;
 expr_stmt:
-    simple_expr SEMI                    { printf("expr_stmt -> expr SEMI\n"); }
+    expr SEMI                           { printf("expr_stmt -> expr SEMI\n"); }
     | SEMI                              { printf("expr_stmt -> SEMI\n"); }
                                         ;
 selection_stmt:
-    IF LP expr RP stmt  %prec LOWER_THAN_ELSE { printf("selection_stmt -> if (expr) stmt\n"); }
-    | IF LP expr RP stmt ELSE stmt      { printf("if (expr) stmt else stmt\n"); }
+    IF LP simple_expr RP stmt  %prec LOWER_THAN_ELSE { printf("selection_stmt -> if (expr) stmt\n"); }
+    | IF LP simple_expr RP stmt ELSE stmt      { printf("if (expr) stmt else stmt\n"); }
                                         ;
 iteration_stmt:
-    WHILE LP expr RP stmt               { printf("while (expr) stmt\n"); }
+    WHILE LP simple_expr RP stmt        { printf("while (expr) stmt\n"); }
                                         ;
 return_stmt:
     RETURN SEMI                         { printf("return_stmt -> return;\n"); }
@@ -148,7 +148,7 @@ return_stmt:
     | RETURN expr SEMI                  { printf("return expr;\n"); }
                                         ;
 expr:
-    var_list ASSIGN expr_list                  { printf("expr -> var_list ASSIGN expr_list\n"); }
+    var_list ASSIGN expr_list           { printf("expr -> var_list ASSIGN expr_list\n"); }
                                         ;
 expr_list:
     expr_list COMMA simple_expr         { printf("expr -> expr_list, simple_expr\n"); }
