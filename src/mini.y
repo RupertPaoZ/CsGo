@@ -149,7 +149,7 @@ return_stmt:
     | RETURN expr SEMI                  { printf("return expr;\n"); }
                                         ;
 function_stmt:
-    call                                { printf("function_stmt -> call\n"); }
+    call SEMI                           { printf("function_stmt -> call\n"); }
                                         ;
 expr:
     var_list ASSIGN expr_list           { printf("expr -> var_list ASSIGN expr_list\n"); }
