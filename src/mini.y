@@ -159,7 +159,7 @@ expr_list:
     | simple_expr                       { printf("expr_list -> simple_expr\n"); }
                                         ;
 var_list:
-    var COMMA var_list                  { printf("var_list -> var_list, var\n"); }
+    var_list COMMA var                  { printf("var_list -> var_list, var\n"); }
     | var                               { printf("var_list -> var\n"); }
     | UNDERSCORE                        { printf("var_list -> _\n"); }
                                         ;
