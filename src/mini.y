@@ -30,7 +30,7 @@ int yylex();
         SEMI
         AND OR NOT
         IF ELSE WHILE FOR
-        FUNC RETURN CALL
+        FUNC RETURN
 
 %token<iVal> INTEGER
 %token<sVal> IDENTIFIER SYS_TYPE VOID
@@ -91,7 +91,7 @@ decl:
                                         ;
 var_decl:
     type_specifier IDENTIFIER SEMI      { printf("var_decl -> type_specifier identifier SEMI\n"); }
-    | type_specifier IDENTIFIER LB INTEGER RB {printf("var_decl -> type_specifier identifier LB NUM RB\n"); }
+    | type_specifier IDENTIFIER LB INTEGER RB SEMI {printf("var_decl -> type_specifier identifier LB NUM RB\n"); }
                                         ;
 type_specifier:
     SYS_TYPE                            { printf("type_specifier -> SYS_TYPE\n"); }
@@ -113,15 +113,15 @@ param:
     | IDENTIFIER LB RB type_specifier   { printf("param -> identifier [] type_specifier\n"); }
                                         ;
 compound_stmt:
-    LCP local_decls stmt_list RCP       { printf("{local_decls stmt_list}\n"); }
+    LCP local_decls stmt_list RCP       { printf("compound_stmt -> {local_decls stmt_list}\n"); }
                                         ;
 local_decls:
-    local_decls var_decl                { printf("local_decls var_decl\n"); }
+    local_decls var_decl                { printf("local_decls -> local_decls var_decl\n"); }
     | /* empty */                          
                                         ;
 stmt_list:
-    stmt_list stmt                      { printf("stmt_list stmt\n"); }
-    | /* empty */
+    stmt_list stmt                      { printf("stmt_list -> stmt_list stmt\n"); }
+    | /* empty */                       { printf("stmt_list -> empty\n"); }
                                         ;
 stmt:
     expr_stmt                           { printf("stmt -> expr_stmt\n"); }
@@ -129,22 +129,26 @@ stmt:
     | selection_stmt                    { printf("stmt -> selection_stmt\n"); }
     | iteration_stmt                    { printf("stmt -> iteration-stmt\n"); }
     | return_stmt                       { printf("stmt -> return-stmt\n"); }
+    | function_stmt                     { printf("stmt -> function-stmt\n"); }
                                         ;
 expr_stmt:
     expr SEMI                           { printf("expr_stmt -> expr SEMI\n"); }
     | SEMI                              { printf("expr_stmt -> SEMI\n"); }
                                         ;
 selection_stmt:
-    IF LP expr RP stmt  %prec LOWER_THAN_ELSE { printf("selection_stmt -> if (expr) stmt\n"); }
-    | IF LP expr RP stmt ELSE stmt      { printf("if (expr) stmt else stmt\n"); }
+    IF LP simple_expr RP stmt  %prec LOWER_THAN_ELSE { printf("selection_stmt -> if (expr) stmt\n"); }
+    | IF LP simple_expr RP stmt ELSE stmt      { printf("if (expr) stmt else stmt\n"); }
                                         ;
 iteration_stmt:
-    WHILE LP expr RP stmt               { printf("while (expr) stmt\n"); }
+    WHILE LP simple_expr RP stmt        { printf("while (expr) stmt\n"); }
                                         ;
 return_stmt:
-    RETURN SEMI                         { printf("return_stmt -> return;\n"); }
-    | RETURN INTEGER SEMI               { printf("return_stmt -> return 0;\n"); }
-    | RETURN expr SEMI                  { printf("return expr;\n"); }
+    RETURN INTEGER SEMI                 { printf("return_stmt -> return 0;\n"); }
+    | RETURN FLOAT SEMI                 { printf("return_stmt -> return float;\n"); }
+    | RETURN expr_stmt                  { printf("return expr_stmt;\n"); }
+                                        ;
+function_stmt:
+    call SEMI                           { printf("function_stmt -> call\n"); }
                                         ;
 expr:
     var_list ASSIGN expr_list           { printf("expr -> var_list ASSIGN expr_list\n"); }
@@ -160,6 +164,7 @@ var_list:
                                         ;
 var:
     IDENTIFIER                          { printf("var -> IDENTIFIER\n");}
+    | IDENTIFIER LB simple_expr RB      { printf("var -> IDENTIFIER LB simple_expr RB\n"); }
                                         ;
 simple_expr:
     additive_expr relop additive_expr   { printf("simple_expr -> additive_expr relop additive_expr\n"); }
@@ -191,7 +196,7 @@ mulop:
     | MOD                               { printf("mulop -> MOD\n"); }
                                         ;
 factor:
-    LP expr RP                          { printf("factor -> LP expr RP\n"); }
+    LP simple_expr RP                   { printf("factor -> LP expr RP\n"); }
     | var                               { printf("factor -> var\n"); }
     | call                              { printf("factor -> call\n"); }
     | FLOAT                             { /* be careful */ printf("factor -> NUM\n"); }
@@ -205,8 +210,8 @@ args:
     | /* empty */                       
                                         ;
 arg_list:
-    arg_list COMMA expr                 { printf("arg-list -> arg_list, expr\n"); }
-    | expr                              { printf("arg-list -> expr\n"); }
+    arg_list COMMA simple_expr          { printf("arg-list -> arg_list, expr\n"); }
+    | simple_expr                       { printf("arg-list -> simple_expr\n"); }
                                         ;
 %%
 
