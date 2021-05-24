@@ -1,30 +1,28 @@
-# mini_test: *.c *.h
-#	gcc -o mini_test *.c -lm
-
-# *.c *.h: mini.l mini.y
-#	lex mini.l
-#	yacc -dv mini.y
+NAME = mini
+TEST_FILE = test.gc
 
 CXXFLAGS = -std=c++14 $(NO_WARNING)
 
-all: mini_test
+all: ${NAME}
 
-parser.cpp: mini.y
-	bison -d -o parser.cpp mini.y
+parser.cpp: ${NAME}.y
+	bison -d -o parser.cpp ${NAME}.y --report=all
 
 parser.hpp: parser.cpp
 
-tokenizer.cpp: mini.l
-	flex -o tokenizer.cpp mini.l
+tokenizer.cpp: ${NAME}.l
+	flex -o tokenizer.cpp ${NAME}.l
 
 %.o: %.cpp
 	g++ -c $(CXXFLAGS) -g -o $@ $<
 
-mini_test: parser.o tokenizer.o
+${NAME}: parser.o tokenizer.o
 	g++ -o $@ parser.o tokenizer.o
 
 clean:
 	rm -f parser.cpp parser.hpp tokenizer.cpp
+	rm -f parser.output
 	rm -f *.o
+	rm ${NAME}
 run:
-	./mini_test
+	./${NAME} ${TEST_FILE}

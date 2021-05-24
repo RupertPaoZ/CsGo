@@ -1,2 +1,6 @@
 .vscode
 *.o
+*.json
+parser.cpp parser.hpp tokenizer.cpp
+parser.output
+mini
