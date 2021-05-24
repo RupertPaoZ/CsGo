@@ -143,10 +143,9 @@ iteration_stmt:
     WHILE LP simple_expr RP stmt        { printf("while (expr) stmt\n"); }
                                         ;
 return_stmt:
-    RETURN SEMI                         { printf("return_stmt -> return;\n"); }
-    | RETURN INTEGER SEMI               { printf("return_stmt -> return 0;\n"); }
+    RETURN INTEGER SEMI               { printf("return_stmt -> return 0;\n"); }
     | RETURN FLOAT SEMI                 { printf("return_stmt -> return float;\n"); }
-    | RETURN expr SEMI                  { printf("return expr;\n"); }
+    | RETURN expr_stmt                  { printf("return expr_stmt;\n"); }
                                         ;
 function_stmt:
     call SEMI                           { printf("function_stmt -> call\n"); }
