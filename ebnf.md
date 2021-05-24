@@ -12,24 +12,26 @@
 11. local-declarations -> local-declarations var-declaration | empty
 12. statement-list -> statement-list statement | empty
 13. statement -> expression-stmt | compound-stmt | selection-stmt
-                 | iteration-stmt | return-stmt 
-14. expression-stmt -> expression;|;
-15. selection-stmt -> if (expression) statement
-                      | if (expression) statement else statement
-16. iteration-stmt -> while (expression) statement
-17. return-stmt -> return; | return expression;
-18. expression -> var-list = expression-list
-19. expressoion-list -> expression-list, simple-expression | simple-expression
-20. var-list = var-list, var | var | _	
-21. simple-expression -> additive-expression ...
-22. relop -> <= | < | > | >= | == | !=
-23. additive-expression -> additive-expression addop term | term
-24. addop -> + | -
-25. term -> term mulop factor | factor
-26. mulop -> * | /
-27. factor -> (expression) | var | call | NUM
-28. call -> ID (args)
-29. args -> arg-list | empty
-30. arg-list -> arg-list, expression | expression
+                 | iteration-stmt | return-stmt | function-stmt
+14. expression-stmt -> expression; | ;
+15. selection-stmt -> if (simple-expression) statement
+                      | if (simple-expression) statement else statement
+16. iteration-stmt -> while (simple-expression) statement
+17. return-stmt -> return expression; | return INTEGER; | return FLOAT;
+18. function-stmt -> call;
+19. expression -> var-list = expression-list
+20. expression-list -> expression-list, simple-expression | simple-expression
+21. var-list -> var-list, var | var | _	
+22. var -> ID | ID [simple-expression]
+23. simple-expression -> additive-expression relop additive_expr | additive_expr
+24. relop -> <= | < | > | >= | == | !=
+25. additive-expression -> additive-expression addop term | term
+26. addop -> + | -
+27. term -> term mulop factor | factor
+28. mulop -> * | /
+29. factor -> (simple-expression) | var | call | NUM
+30. call -> ID (args)
+31. args -> arg-list | empty
+32. arg-list -> arg-list, simple-expression | simple-expression
 ~~~
 
