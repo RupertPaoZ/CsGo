@@ -7,7 +7,7 @@ NO_WARNING =  -Wno-return-type \
 
 CXXFLAGS =  -std=c++14 $(NO_WARNING)
 
-OBJS = ast.o parser.o tokenizer.o
+OBJS = parser.o tokenizer.o ast.o
 
 all : $(NAME)
 

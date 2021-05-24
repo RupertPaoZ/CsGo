@@ -1,8 +1,9 @@
 %{
-/* #include "ast.h" */
+#include "ast.h"
 #include <string>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -12,7 +13,7 @@ void yyerror(const char *s) {
 }
 
 int yylex();
-/* Program* root; */
+Program* root = nullptr;
 
 %}
 
@@ -20,6 +21,7 @@ int yylex();
     int iVal;
     float fVal;
     std::string* sVal;
+    Program *program;
 }
 
 %token  LP RP LB RB LCP RCP
@@ -36,7 +38,7 @@ int yylex();
 %token<sVal> IDENTIFIER SYS_TYPE VOID
 %token<fVal> FLOAT
 
-%type<sVal>                         program
+%type<program>                         program
 %type<sVal>                         decl_list
 %type<sVal>                         decl
 %type<sVal>                         var_decl
@@ -69,10 +71,10 @@ int yylex();
 %%
 
 program: decl_list                      { 
-                                            /*
-                                            $$ = new Program($1);
+                                            
+                                            $$ = new Program();
                                             root = $$;
-                                            */
+                                            
                                             printf("program -> decl_list\n");
                                         }
                                         ;
@@ -234,6 +236,11 @@ int main(int argc, char** argv) {
     else {
         printf("Wrong parameters\n");
     }
-    return 0;
 
+    if(root != nullptr){
+        std::ofstream os("ast.json");
+        os << root->Visualize() << std::endl;
+    }
+
+    return 0;
 }

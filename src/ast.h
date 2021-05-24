@@ -65,6 +65,22 @@ enum BuildInType
     CG_VOID
 };
 
+enum RelType
+{
+    REL_LE,
+    REL_LT,
+    REL_GT,
+    REL_GE,
+    REL_EQ,
+    REL_UNE
+};
+
+enum MulType
+{
+    MT_MUL,
+    MT_DIV,
+    MT_MOD
+};
 /*
  * the base class of the node in the tree
  */
@@ -90,15 +106,67 @@ public:
     virtual ~Node() {}
 };
 
+class NodeWithChildren : public Node
+{
+protected:
+    NodeList *children;
+
+public:
+    NodeWithChildren(std::string name);
+    std::string Visualize();
+    ~NodeWithChildren() { delete children; }
+};
+
+class RelOp : public Node
+{
+private:
+    RelType relType;
+
+public:
+    RelOp(RelType reltype);
+    ~RelOp() {}
+};
+
+class AddOp : public Node
+{
+private:
+    bool isPuls;
+
+public:
+    AddOp(bool isplus = true);
+    ~AddOp() {}
+};
+
+class MulOp : public Node
+{
+private:
+    MulType mulType;
+
+public:
+    MulOp(MulType multype);
+    ~MulOp() {}
+};
+
 class Program : public Node
 {
 private:
     DeclList *declList;
 
 public:
+    Program() : Node("Program") {}
     Program(DeclList *decllist) : Node("Program"), declList(decllist) {}
     std::string Visualize();
     ~Program() {}
+};
+
+class SysType : public Node
+{
+private:
+    BuildInType dataType;
+
+public:
+    SysType(std::string datatype);
+    ~SysType() {}
 };
 
 class TypeSpec : public Node
@@ -107,30 +175,29 @@ private:
     SysType *childType;
 
 public:
-    TypeSpec(std::string childtype) : Node("TypeSpec")
-    {
-        childType = new SysType(childtype);
-    }
+    TypeSpec(std::string childtype);
     std::string Visualize();
     ~TypeSpec() { delete childType; }
 };
-class Param : public Node
+
+class Identifier : public Node
+{
+public:
+    Identifier() : Node("Identifier") {}
+    ~Identifier() {}
+};
+class Param : public NodeWithChildren
 {
 private:
     Identifier *identifier;
     TypeSpec *typeSpec;
     bool isArray;
-    NodeList *children;
 
 public:
-    Param(Identifier *iden, TypeSpec *typespec, bool isarray = false) : Node("Para"), identifier(iden), typeSpec(typespec), isArray(isarray)
-    {
-        this->children->push_back(dynamic_cast<Node *>(identifier));
-        this->children->push_back(dynamic_cast<Node *>(typespec));
-    }
-    std::string Visualize();
+    Param(Identifier *iden, TypeSpec *typespec, bool isarray = false);
     ~Param() {}
 };
+
 class Params : public Node
 {
 private:
@@ -141,35 +208,134 @@ public:
     std::string Visualize();
     ~Params() {}
 };
-class Statement : public Node
+class Statement : public NodeWithChildren
 {
 public:
-    Statement(std::string stmtname) : Node(stmtname) {}
+    Statement(std::string stmtname) : NodeWithChildren(stmtname) {}
     ~Statement() {}
 };
-class SimpleExpr : public Node
+
+class Factor : public Node
+{
+private:
+    enum
+    {
+        FT_SIMPLEEXPR,
+        FT_VAR,
+        FT_CALL,
+        FT_FLOAT,
+        FT_INTEGER
+    } factorType;
+    SimpleExpr *simpleExpr;
+    Variable *variable;
+    Call *call;
+    Float *nfloat;
+    Integer *integer;
+
+public:
+    Factor(SimpleExpr *simpleexpr) : Node("factor"), simpleExpr(simpleexpr) { factorType = FT_SIMPLEEXPR; }
+    Factor(Variable *variable) : Node("factor"), variable(variable) { factorType = FT_VAR; }
+    Factor(Call *call) : Node("factor"), call(call) { factorType = FT_CALL; }
+    Factor(Float *nfloat) : Node("factor"), nfloat(nfloat) { factorType = FT_FLOAT; }
+    Factor(Integer *inte) : Node("factor"), integer(inte) { factorType = FT_INTEGER; }
+    std::string Visualize();
+    ~Factor() {}
+};
+
+class Term : public NodeWithChildren
+{
+private:
+    Term *term;
+    MulOp *mulOp;
+    Factor *factor;
+    bool isRec;
+
+public:
+    Term(Term *term, MulOp *mulop = nullptr, Factor *factor = nullptr, bool isrec = false);
+    ~Term() {}
+};
+
+class Call : public NodeWithChildren
+{
+private:
+    Identifier *identifier;
+    Args *args;
+
+public:
+    Call(Identifier *iden, Args *args);
+    ~Call() {}
+};
+
+class Variable : public NodeWithChildren
+{
+private:
+    Identifier *identifier;
+    SimpleExpr *simpleExpr;
+    bool isArray;
+
+public:
+    Variable(Identifier *iden, SimpleExpr *simpleexpr = nullptr, bool isarray = false);
+    ~Variable() {}
+};
+
+class UnderScore : public Node
 {
 public:
-    SimpleExpr(std::string simpleexprname) : Node(simpleexprname) {}
+    UnderScore() : Node("UnderScore") {}
+    ~UnderScore() {}
+};
+
+class AddiExpr : public NodeWithChildren
+{
+private:
+    AddiExpr *addiExpr;
+    AddOp *addOp;
+    Term *term;
+    bool isRec;
+
+public:
+    AddiExpr(AddiExpr *addiexpr, AddOp *addop = nullptr, Term *term = nullptr, bool isrec = false);
+    ~AddiExpr() {}
+};
+
+class SimpleExpr : public NodeWithChildren
+{
+private:
+    AddiExpr *addiExpr1;
+    RelOp *relOp;
+    AddiExpr *addiExpr2;
+    bool isCompareExpr;
+
+public:
+    SimpleExpr(AddiExpr *addiexpr1, RelOp *relop = nullptr, AddiExpr *addiexpr2 = nullptr, bool iscompareexpr = false);
     ~SimpleExpr() {}
 };
+
+class Decl : public NodeWithChildren
+{
+public:
+    Decl(std::string declname);
+    ~Decl() {}
+};
+
 class LocalDecls : public Decl
 {
 private:
     LocalList *localList;
 
 public:
-    LocalDecls(LocalList *locallist) : Decl("LocalDecls"), localList(locallist) {}
+    LocalDecls(LocalList *locallist);
     std::string Visualize();
     ~LocalDecls() {}
 };
+
 class Stmts : public Statement
 {
 private:
     StmtList *stmtList;
 
 public:
-    Stmts(StmtList *stmtlist) : Statement("LocalDecls"), stmtList(stmtlist) {}
+    Stmts(StmtList *stmtlist);
     std::string Visualize();
     ~Stmts() {}
 };
@@ -178,16 +344,9 @@ class ComStmt : public Statement
 private:
     LocalDecls *localDecls;
     Stmts *stmts;
-    NodeList *children;
 
 public:
-    ComStmt(LocalDecls *localdecls, Stmts *stmts) : Statement("ComStmt"), localDecls(localdecls), stmts(stmts)
-    {
-        this->children = new NodeList();
-        this->children->push_back(dynamic_cast<Node *>(this->localDecls));
-        this->children->push_back(dynamic_cast<Node *>(this->stmts));
-    }
-    std::string Visualize();
+    ComStmt(LocalDecls *localdecls, Stmts *stmts);
     ~ComStmt() {}
 };
 class Vars : public Node
@@ -200,6 +359,7 @@ public:
     std::string Visualize();
     ~Vars() {}
 };
+
 class Exprs : public Node
 {
 private:
@@ -210,56 +370,41 @@ public:
     std::string Visualize();
     ~Exprs() {}
 };
+
 class ExprStmt : public Statement
 {
 private:
     Vars *vars;
     Exprs *exprs;
-    NodeList *children;
     bool isNull;
 
 public:
-    ExprStmt(Vars *vars = nullptr, Exprs *exprs = nullptr, bool isnull = true) : Statement("ExprStmt"), vars(vars), exprs(exprs), isNull(isnull)
-    {
-        if (!isNull)
-        {
-            this->children = new NodeList();
-            this->children->push_back(dynamic_cast<Node *>(vars));
-            this->children->push_back(dynamic_cast<Node *>(exprs));
-        }
-    }
+    ExprStmt(Vars *vars = nullptr, Exprs *exprs = nullptr, bool isnull = true);
     std::string Visualize();
     ~ExprStmt() {}
 };
+
 class FuncStmt : public Statement
 {
+private:
+    Call *call;
+
 public:
-    FuncStmt() : Statement("FuncStmt") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
+    FuncStmt(Call *call) : Statement("FuncStmt"), call(call) {}
+    std::string Visualize();
     ~FuncStmt() {}
 };
+
 class SelectStmt : public Statement
 {
 private:
     SimpleExpr *simpleExpr;
     Statement *ifStmt;
     Statement *elStmt;
-    NodeList *children;
     bool isIfelse;
 
 public:
-    SelectStmt(SimpleExpr *simpleexpr, Statement *ifstmt, Statement *elstmt, bool isifelse = false) : Statement("SelectStmt"), simpleExpr(simpleexpr), ifStmt(ifstmt), elStmt(elstmt), isIfelse(isifelse)
-    {
-        children = new NodeList();
-        this->children->push_back(dynamic_cast<Node *>(simpleExpr));
-        this->children->push_back(dynamic_cast<Node *>(ifStmt));
-        if (isIfelse)
-            this->children->push_back(dynamic_cast<Node *>(elStmt));
-    }
-    std::string Visualize();
+    SelectStmt(SimpleExpr *simpleexpr, Statement *ifstmt, Statement *elstmt, bool isifelse = false);
     ~SelectStmt() {}
 };
 class IterStmt : public Statement
@@ -267,16 +412,9 @@ class IterStmt : public Statement
 private:
     SimpleExpr *simpleExpr;
     Statement *statement;
-    NodeList *children;
 
 public:
-    IterStmt(SimpleExpr *simpleexpr, Statement *stmt) : Statement("IterStmt"), simpleExpr(simpleexpr), statement(stmt)
-    {
-        this->children = new NodeList();
-        this->children->push_back(dynamic_cast<Node *>(this->simpleExpr));
-        this->children->push_back(dynamic_cast<Node *>(this->statement));
-    }
-    std::string Visualize();
+    IterStmt(SimpleExpr *simpleexpr, Statement *stmt);
     ~IterStmt() {}
 };
 class RetStmt : public Statement
@@ -308,134 +446,16 @@ public:
     std::string Visualize();
     ~RetStmt() {}
 };
-class AddiExpr : public SimpleExpr
-{
-public:
-    AddiExpr() : SimpleExpr("AddiExpr") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~AddiExpr() {}
-};
-class RelOp : public Node
-{
-public:
-    RelOp() : Node("RelOp") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~RelOp() {}
-};
-class AddOp : public Node
-{
-public:
-    AddOp() : Node("AddOp") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~AddOp() {}
-};
-class MulOp : public Node
-{
-public:
-    MulOp() : Node("MulOp") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~MulOp() {}
-};
-class Term : public SimpleExpr
-{
-public:
-    Term(std::string termname) : SimpleExpr(termname) {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~Term() {}
-};
-class Factor : public Term
-{
-public:
-    Factor(std::string factorname) : Term(factorname) {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~Factor() {}
-};
-class Call : public Factor
-{
-public:
-    Call() : Factor("Call") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~Call() {}
-};
-class Variable : public Node
-{
-public:
-    Variable() : Node("Variable") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~Variable() {}
-};
-class UnderScore : public Node
-{
-public:
-    UnderScore() : Node("UnderScore") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~UnderScore() {}
-};
+
 class Args : public Node
 {
-public:
-    Args() : Node("Args") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~Args() {}
-};
-class Identifier : public SimpleExpr
-{
-public:
-    Identifier() : SimpleExpr("Identifier") {}
-    std::string Visualize()
-    {
-        return Format();
-    }
-    ~Identifier() {}
-};
-class SysType : public Node
-{
 private:
-    BuildInType dataType;
+    ArgList *argList;
 
 public:
-    SysType(std::string datatype) : Node(datatype)
-    {
-        if (datatype == "int")
-            dataType = CG_INTEGER;
-        else if (datatype == "float")
-            dataType = CG_FLOAT;
-        else if (datatype == "char")
-            dataType = CG_CHAR;
-        else
-            dataType = CG_VOID;
-    }
-    ~SysType() {}
+    Args(ArgList *arglist) : Node("Args"), argList(argList) {}
+    std::string Visualize();
+    ~Args() {}
 };
 class Void : public SysType
 {
@@ -454,26 +474,23 @@ public:
 };
 class Float : public SysType
 {
+private:
+    float value;
+
 public:
-    Float() : SysType("Float") {}
+    Float(float v) : SysType("Float"), value(v) {}
     ~Float() {}
 };
 class Char : public SysType
 {
-public:
-    Char() : SysType("Char") {}
-    ~Char() {}
-};
-class Decl : public Node
-{
-protected:
-    NodeList *children;
+private:
+    char value;
 
 public:
-    Decl(std::string declname) : Node(declname) {}
-    std::string Visualize();
-    ~Decl() { delete children; }
+    Char(char v) : SysType("Char"), value(v) {}
+    ~Char() {}
 };
+
 class VarDecl : public Decl
 {
 private:
@@ -483,16 +500,10 @@ private:
     bool isArray;
 
 public:
-    VarDecl(TypeSpec *typespec, Identifier *iden, Integer *inte = nullptr, bool isarray = false) : Decl("VarDecl"), typeSpec(typespec), identifier(iden), integer(inte), isArray(isarray)
-    {
-        this->children = new NodeList();
-        this->children->push_back(dynamic_cast<Node *>(this->typeSpec));
-        this->children->push_back(dynamic_cast<Node *>(this->identifier));
-        if (this->isArray)
-            this->children->push_back(dynamic_cast<Node *>(this->integer));
-    }
+    VarDecl(TypeSpec *typespec, Identifier *iden, Integer *inte = nullptr, bool isarray = false);
     ~VarDecl() {}
 };
+
 class FuncDecl : public Decl
 {
 private:
@@ -501,14 +512,7 @@ private:
     ComStmt *comStmt;
 
 public:
-    FuncDecl(Identifier *iden, Params *inparams, Params *outparams, ComStmt *comstmt) : Decl("FuncDecl"), identifier(iden), inParams(inparams), outParams(outparams), comStmt(comstmt)
-    {
-        this->children = new NodeList();
-        this->children->push_back(dynamic_cast<Node *>(this->identifier));
-        this->children->push_back(dynamic_cast<Node *>(this->inParams));
-        this->children->push_back(dynamic_cast<Node *>(this->outParams));
-        this->children->push_back(dynamic_cast<Node *>(this->comStmt));
-    }
+    FuncDecl(Identifier *iden, Params *inparams, Params *outparams, ComStmt *comstmt);
     ~FuncDecl() {}
 };
 
