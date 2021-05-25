@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string>
+#include "ast.h"
 #include "parser.hpp"
 extern "C" int yywrap() {return 1;}
 %}
