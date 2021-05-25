@@ -153,7 +153,6 @@ private:
     DeclList *declList;
 
 public:
-    Program() : Node("Program") {}
     Program(DeclList *decllist) : Node("Program"), declList(decllist) {}
     std::string Visualize();
     ~Program() {}
@@ -175,15 +174,17 @@ private:
     SysType *childType;
 
 public:
-    TypeSpec(std::string childtype);
+    TypeSpec(std::string *childtype);
     std::string Visualize();
     ~TypeSpec() { delete childType; }
 };
 
 class Identifier : public Node
 {
+private:
+    std::string ID;
 public:
-    Identifier() : Node("Identifier") {}
+    Identifier(std::string *id) : Node("Identifier"), ID(*id) {}
     ~Identifier() {}
 };
 class Param : public NodeWithChildren
@@ -202,9 +203,11 @@ class Params : public Node
 {
 private:
     ParamList *paramList;
+    bool isVoid;
 
 public:
-    Params(ParamList *paramlist) : Node("Params"), paramList(paramlist) {}
+    Params() : Node("Void"), isVoid(true){}
+    Params(ParamList *paramlist) : Node("Params"), paramList(paramlist), isVoid(false) {}
     std::string Visualize();
     ~Params() {}
 };
@@ -251,7 +254,7 @@ private:
     bool isRec;
 
 public:
-    Term(Term *term, MulOp *mulop = nullptr, Factor *factor = nullptr, bool isrec = false);
+    Term(Factor *factor, MulOp *mulop = nullptr, Term *term = nullptr, bool isrec = false);
     ~Term() {}
 };
 
@@ -274,14 +277,15 @@ private:
     bool isArray;
 
 public:
+    Variable():NodeWithChildren("UnderScore"),identifier(nullptr),simpleExpr(nullptr),isArray(false){}
     Variable(Identifier *iden, SimpleExpr *simpleexpr = nullptr, bool isarray = false);
     ~Variable() {}
 };
 
-class UnderScore : public Node
+class UnderScore : public Variable
 {
 public:
-    UnderScore() : Node("UnderScore") {}
+    UnderScore() {}
     ~UnderScore() {}
 };
 
@@ -294,7 +298,7 @@ private:
     bool isRec;
 
 public:
-    AddiExpr(AddiExpr *addiexpr, AddOp *addop = nullptr, Term *term = nullptr, bool isrec = false);
+    AddiExpr(Term *term, AddOp *addop = nullptr, AddiExpr *addiexpr = nullptr, bool isrec = false);
     ~AddiExpr() {}
 };
 
@@ -404,7 +408,7 @@ private:
     bool isIfelse;
 
 public:
-    SelectStmt(SimpleExpr *simpleexpr, Statement *ifstmt, Statement *elstmt, bool isifelse = false);
+    SelectStmt(SimpleExpr *simpleexpr, Statement *ifstmt, Statement *elstmt = nullptr, bool isifelse = false);
     ~SelectStmt() {}
 };
 class IterStmt : public Statement
@@ -453,14 +457,14 @@ private:
     ArgList *argList;
 
 public:
-    Args(ArgList *arglist) : Node("Args"), argList(argList) {}
+    Args(ArgList *arglist=nullptr) : Node("Args"), argList(arglist) {}
     std::string Visualize();
     ~Args() {}
 };
-class Void : public SysType
+class Void : public Node
 {
 public:
-    Void() : SysType("void") {}
+    Void() : Node("void") {}
     ~Void() {}
 };
 class Integer : public SysType

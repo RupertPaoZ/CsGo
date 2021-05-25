@@ -22,6 +22,46 @@ Program* root = nullptr;
     float fVal;
     std::string* sVal;
     Program *program;
+    Identifier *identifier;
+    SysType *systype;
+    Integer *integer;
+    Float *nfloat;
+    Char *nchar;
+    UnderScore *underscore;
+    Void *nvoid;
+    Decl *decl;
+    VarDecl *vardecl;
+    FuncDecl *funcdecl;
+    TypeSpec *typespec;
+    Param *param;
+    Params *params;
+    ComStmt *comstmt;
+    ExprStmt *exprstmt;
+    FuncStmt *funcstmt;
+    SelectStmt *selectstmt;
+    IterStmt *iterstmt;
+    RetStmt *retstmt;
+    Statement *statement;
+    SimpleExpr *simpleexpr;
+    LocalDecls *localdecls;
+    Stmts *stmts;
+    AddiExpr *addiexpr;
+    RelOp *relop;
+    AddOp *addop;
+    MulOp *mulop;
+    Term *term;
+    Factor *factor;
+    Call *call;
+    Variable *variable;
+    Args *args;
+
+    DeclList *decllist;
+    LocalList *locallist;
+    ParamList *paramlist;
+    StmtList *stmtlist;
+    ExprList *exprlist;
+    VarList *varlist;
+    ArgList *arglist;
 }
 
 %token  LP RP LB RB LCP RCP
@@ -38,31 +78,38 @@ Program* root = nullptr;
 %token<sVal> IDENTIFIER SYS_TYPE VOID
 %token<fVal> FLOAT
 
-%type<program>                         program
-%type<sVal>                         decl_list
-%type<sVal>                         decl
-%type<sVal>                         var_decl
-%type<sVal>                         fun_decl
-%type<sVal>                         type_specifier
-%type<sVal>                         params
-%type<sVal>                         compound_stmt
-%type<sVal>                         param_list
-%type<sVal>                         local_decls
-%type<sVal>                         stmt_list
-%type<sVal>                         stmt 
-%type<sVal>                         expr_stmt
-%type<sVal>                         selection_stmt
-%type<sVal>                         iteration_stmt
-%type<sVal>                         return_stmt
-%type<sVal>                         expr 
-%type<sVal>                         var_list
-%type<sVal>                         simple_expr
-%type<sVal>                         var
-%type<sVal>                         additive_expr
-%type<sVal>                         term
-%type<sVal>                         factor
-%type<sVal>                         args
-%type<sVal>                         arg_list
+%type<program>                          program
+%type<decllist>                         decl_list
+%type<decl>                             decl
+%type<vardecl>                          var_decl
+%type<funcdecl>                         fun_decl
+%type<typespec>                         type_specifier
+%type<params>                           params
+%type<param>                            param
+%type<comstmt>                          compound_stmt
+%type<paramlist>                        param_list
+%type<locallist>                        local_decls
+%type<stmtlist>                         stmt_list
+%type<statement>                        stmt 
+%type<exprstmt>                         expr_stmt
+%type<funcstmt>                         function_stmt
+%type<selectstmt>                       selection_stmt
+%type<iterstmt>                         iteration_stmt
+%type<retstmt>                          return_stmt
+%type<exprstmt>                         expr 
+%type<varlist>                          var_list
+%type<simpleexpr>                       simple_expr
+%type<variable>                         var
+%type<addiexpr>                         additive_expr
+%type<term>                             term
+%type<factor>                           factor
+%type<args>                             args
+%type<arglist>                          arg_list
+%type<exprlist>                         expr_list
+%type<relop>                            relop
+%type<addop>                            addop
+%type<mulop>                            mulop
+%type<call>                             call
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -71,149 +118,228 @@ Program* root = nullptr;
 %%
 
 program: decl_list                      { 
-                                            
-                                            $$ = new Program();
-                                            root = $$;
-                                            
+                                            $$ = new Program($1);
+                                            root = $$;  
                                             printf("program -> decl_list\n");
                                         }
                                         ;
 decl_list:
     decl_list decl                      {
                                             $$ = $1;
-                                            /* $$->push_back(new Declaration()); */
-                                            /* test */
+                                            $$->push_back($2);
                                             printf("decl_list -> decl_list decl\n");
                                         }
-    | decl                              { $$ = $1; printf("decl_list -> decl\n"); }
+    | decl                              {   $$ = new DeclList();
+                                            $$->push_back($1);
+                                            printf("decl_list -> decl\n"); }
                                         ;
 decl: 
-    var_decl                            { printf("decl -> var_decl\n"); }
-    | fun_decl                          { printf("decl -> fun_decl\n"); }
+    var_decl                            {   $$=$1;
+                                            printf("decl -> var_decl\n"); }
+    | fun_decl                          {   $$ = $1;
+                                            printf("decl -> fun_decl\n"); }
                                         ;
 var_decl:
-    type_specifier IDENTIFIER SEMI      { printf("var_decl -> type_specifier identifier SEMI\n"); }
-    | type_specifier IDENTIFIER LB INTEGER RB SEMI {printf("var_decl -> type_specifier identifier LB NUM RB\n"); }
+    type_specifier IDENTIFIER SEMI      {   $$ = new VarDecl($1, new Identifier($2));
+                                            printf("var_decl -> type_specifier identifier SEMI\n"); }
+    | type_specifier IDENTIFIER LB INTEGER RB SEMI {
+                                            $$ = new VarDecl($1, new Identifier($2), new Integer($4), true);
+                                            printf("var_decl -> type_specifier identifier LB NUM RB\n"); }
                                         ;
 type_specifier:
-    SYS_TYPE                            { printf("type_specifier -> SYS_TYPE\n"); }
+    SYS_TYPE                            {   $$ = new TypeSpec($1);
+                                            printf("type_specifier -> SYS_TYPE\n"); }
                                         ;
 fun_decl:
     FUNC IDENTIFIER LP params RP LP params RP compound_stmt     
-                                        { printf("fun_decl -> func identifier(params)(params) compound_stmt\n"); }
+                                        {   $$ = new FuncDecl(new Identifier($2), $4, $7, $9);
+                                            printf("fun_decl -> func identifier(params)(params) compound_stmt\n"); }
                                         ;
 params:
-    param_list                          { printf("params -> param_list\n" ); }
-    | VOID                              { printf("params -> VOID\n");}
+    param_list                          {   $$ = new Params($1);
+                                            printf("params -> param_list\n" ); }
+    | VOID                              {   $$ = new Params();
+                                            printf("params -> VOID\n");}
                                         ;
 param_list:
-    param_list COMMA param              { printf("param_list -> param_list COMMA param\n" ); }
-    | param                             { printf("param_list -> param\n" ); }
+    param_list COMMA param              {   $$ = $1;
+                                            $$->push_back($3);
+                                            printf("param_list -> param_list COMMA param\n" ); }
+    | param                             {   $$ = new ParamList();
+                                            $$->push_back($1);
+                                            printf("param_list -> param\n" ); }
                                         ;
 param:
-    IDENTIFIER type_specifier           { printf("param -> identifier type_specifier\n" ); }
-    | IDENTIFIER LB RB type_specifier   { printf("param -> identifier [] type_specifier\n"); }
+    IDENTIFIER type_specifier           {   $$ = new Param(new Identifier($1), $2);
+                                            printf("param -> identifier type_specifier\n" ); }
+    | IDENTIFIER LB RB type_specifier   {   $$ = new Param(new Identifier($1), $4, true);
+                                            printf("param -> identifier [] type_specifier\n"); }
                                         ;
 compound_stmt:
-    LCP local_decls stmt_list RCP       { printf("compound_stmt -> {local_decls stmt_list}\n"); }
+    LCP local_decls stmt_list RCP       {   $$ = new ComStmt(new LocalDecls($2), new Stmts($3));
+                                            printf("compound_stmt -> {local_decls stmt_list}\n"); }
                                         ;
 local_decls:
-    local_decls var_decl                { printf("local_decls -> local_decls var_decl\n"); }
-    | /* empty */                          
+    local_decls var_decl                {   $$ = $1;
+                                            $1->push_back($2);
+                                            printf("local_decls -> local_decls var_decl\n"); }
+    | /* empty */                       {   $$ = new LocalList(); }
                                         ;
 stmt_list:
-    stmt_list stmt                      { printf("stmt_list -> stmt_list stmt\n"); }
-    | /* empty */                       { printf("stmt_list -> empty\n"); }
+    stmt_list stmt                      {   $$ = $1;
+                                            $1->push_back($2);
+                                            printf("stmt_list -> stmt_list stmt\n"); }
+    | /* empty */                       {   $$ = new StmtList();
+                                            printf("stmt_list -> empty\n"); }
                                         ;
 stmt:
-    expr_stmt                           { printf("stmt -> expr_stmt\n"); }
-    | compound_stmt                     { printf("stmt -> compound_stmt\n"); }
-    | selection_stmt                    { printf("stmt -> selection_stmt\n"); }
-    | iteration_stmt                    { printf("stmt -> iteration-stmt\n"); }
-    | return_stmt                       { printf("stmt -> return-stmt\n"); }
-    | function_stmt                     { printf("stmt -> function-stmt\n"); }
+    expr_stmt                           {   $$ = $1;
+                                            printf("stmt -> expr_stmt\n"); }
+    | compound_stmt                     {   $$ = $1;
+                                            printf("stmt -> compound_stmt\n"); }
+    | selection_stmt                    {   $$ = $1;
+                                            printf("stmt -> selection_stmt\n"); }
+    | iteration_stmt                    {   $$ = $1;
+                                            printf("stmt -> iteration-stmt\n"); }
+    | return_stmt                       {   $$ = $1;
+                                            printf("stmt -> return-stmt\n"); }
+    | function_stmt                     {   $$ = $1;
+                                            printf("stmt -> function-stmt\n"); }
                                         ;
 expr_stmt:
-    expr SEMI                           { printf("expr_stmt -> expr SEMI\n"); }
-    | SEMI                              { printf("expr_stmt -> SEMI\n"); }
+    expr SEMI                           {   $$ = $1;
+                                            printf("expr_stmt -> expr SEMI\n"); }
+    | SEMI                              {   $$ = new ExprStmt();
+                                            printf("expr_stmt -> SEMI\n"); }
                                         ;
 selection_stmt:
-    IF LP simple_expr RP stmt  %prec LOWER_THAN_ELSE { printf("selection_stmt -> if (expr) stmt\n"); }
-    | IF LP simple_expr RP stmt ELSE stmt      { printf("if (expr) stmt else stmt\n"); }
+    IF LP simple_expr RP stmt  %prec LOWER_THAN_ELSE { 
+                                            $$ = new SelectStmt($3, $5);
+                                            printf("selection_stmt -> if (expr) stmt\n"); }
+    | IF LP simple_expr RP stmt ELSE stmt      { 
+                                            $$ = new SelectStmt($3, $5, $7, true);
+                                            printf("if (expr) stmt else stmt\n"); }
                                         ;
 iteration_stmt:
-    WHILE LP simple_expr RP stmt        { printf("while (expr) stmt\n"); }
+    WHILE LP simple_expr RP stmt        {   $$ = new IterStmt($3, $5);
+                                            printf("while (expr) stmt\n"); }
                                         ;
 return_stmt:
-    RETURN INTEGER SEMI                 { printf("return_stmt -> return 0;\n"); }
-    | RETURN FLOAT SEMI                 { printf("return_stmt -> return float;\n"); }
-    | RETURN expr_stmt                  { printf("return expr_stmt;\n"); }
+    RETURN INTEGER SEMI                 {   $$ = new RetStmt(new Integer($2));
+                                            printf("return_stmt -> return 0;\n"); }
+    | RETURN FLOAT SEMI                 {   $$ = new RetStmt(new Float($2));
+                                            printf("return_stmt -> return float;\n"); }
+    | RETURN expr_stmt                  {   $$ = new RetStmt($2);
+                                            printf("return expr_stmt;\n"); }
                                         ;
 function_stmt:
-    call SEMI                           { printf("function_stmt -> call\n"); }
+    call SEMI                           {   $$ = new FuncStmt($1);
+                                            printf("function_stmt -> call\n"); }
                                         ;
 expr:
-    var_list ASSIGN expr_list           { printf("expr -> var_list ASSIGN expr_list\n"); }
+    var_list ASSIGN expr_list           {   $$ = new ExprStmt(new Vars($1), new Exprs($3), false);
+                                            printf("expr -> var_list ASSIGN expr_list\n"); }
                                         ;
 expr_list:
-    expr_list COMMA simple_expr         { printf("expr -> expr_list, simple_expr\n"); }
-    | simple_expr                       { printf("expr_list -> simple_expr\n"); }
+    expr_list COMMA simple_expr         {   $$ = $1;
+                                            $$->push_back($3);
+                                            printf("expr -> expr_list, simple_expr\n"); }
+    | simple_expr                       {   $$ = new ExprList();
+                                            $$->push_back($1);
+                                            printf("expr_list -> simple_expr\n"); }
                                         ;
 var_list:
-    var_list COMMA var                  { printf("var_list -> var_list, var\n"); }
-    | var                               { printf("var_list -> var\n"); }
-    | UNDERSCORE                        { printf("var_list -> _\n"); }
+    var_list COMMA var                  {   $$ = $1;
+                                            $$->push_back($3);
+                                            printf("var_list -> var_list, var\n"); }
+    | var                               {   $$ = new VarList();
+                                            $$->push_back($1);
+                                            printf("var_list -> var\n"); }
+    | UNDERSCORE                        {   $$ = new VarList();
+                                            $$->push_back(new UnderScore());
+                                            printf("var_list -> _\n"); }
                                         ;
 var:
-    IDENTIFIER                          { printf("var -> IDENTIFIER\n");}
-    | IDENTIFIER LB simple_expr RB      { printf("var -> IDENTIFIER LB simple_expr RB\n"); }
+    IDENTIFIER                          {   $$ = new Variable(new Identifier($1));
+                                            printf("var -> IDENTIFIER\n");}
+    | IDENTIFIER LB simple_expr RB      {   $$ = new Variable(new Identifier($1), $3, true);
+                                            printf("var -> IDENTIFIER LB simple_expr RB\n"); }
                                         ;
 simple_expr:
-    additive_expr relop additive_expr   { printf("simple_expr -> additive_expr relop additive_expr\n"); }
-    | additive_expr                     { printf("simple_expr -> additive_expr\n"); }
+    additive_expr relop additive_expr   {   $$ = new SimpleExpr($1, $2, $3, true);
+                                            printf("simple_expr -> additive_expr relop additive_expr\n"); }
+    | additive_expr                     {   $$ = new SimpleExpr($1);
+                                            printf("simple_expr -> additive_expr\n"); }
                                         ;
 relop:
-    LE                                  { printf("relop -> LE\n"); }
-    | LT                                { printf("relop -> LT\n"); }
-    | GT                                { printf("relop -> GT\n"); }
-    | GE                                { printf("relop -> GE\n"); }
-    | EQUAL                             { printf("relop -> EQUAL\n"); }
-    | UNEQUAL                           { printf("relop -> UNEQUAL\n"); }
+    LE                                  {   $$ = new RelOp(REL_LE);
+                                            printf("relop -> LE\n"); }
+    | LT                                {   $$ = new RelOp(REL_LT);
+                                            printf("relop -> LT\n"); }
+    | GT                                {   $$ = new RelOp(REL_GT);
+                                            printf("relop -> GT\n"); }
+    | GE                                {   $$ = new RelOp(REL_GE);
+                                            printf("relop -> GE\n"); }
+    | EQUAL                             {   $$ = new RelOp(REL_EQ);
+                                            printf("relop -> EQUAL\n"); }
+    | UNEQUAL                           {   $$ = new RelOp(REL_UNE);
+                                            printf("relop -> UNEQUAL\n"); }
                                         ;
 additive_expr:
-    additive_expr addop term            { printf("additive_expr -> additive_expr addop term\n"); }
-    | term                              { printf("additive_expr -> term\n"); }
+    additive_expr addop term            {   $$ = new AddiExpr($3, $2, $1, true);
+                                            printf("additive_expr -> additive_expr addop term\n"); }
+    | term                              {   $$ = new AddiExpr($1);
+                                            printf("additive_expr -> term\n"); }
                                         ;
 addop:
-    PLUS                                { printf("addop -> PLUS\n"); }
-    | MINUS                             { printf("addop -> MINUS\n"); }
+    PLUS                                {   $$ = new AddOp();
+                                            printf("addop -> PLUS\n"); }
+    | MINUS                             {   $$ = new AddOp(false);
+                                            printf("addop -> MINUS\n"); }
                                         ;
 term:
-    term mulop factor                   { printf("term -> term mulop factor\n"); }
-    | factor                            { printf("term -> factor\n"); }
+    term mulop factor                   {   $$ = new Term($3, $2, $1, true);
+                                            printf("term -> term mulop factor\n"); }
+    | factor                            {   $$ = new Term($1);
+                                            printf("term -> factor\n"); }
                                         ;
 mulop:
-    MUL                                 { printf("mulop -> MUL\n"); }
-    | DIV                               { printf("mulop -> DIV\n"); }
-    | MOD                               { printf("mulop -> MOD\n"); }
+    MUL                                 {   $$ = new MulOp(MT_MUL);
+                                            printf("mulop -> MUL\n"); }
+    | DIV                               {   $$ = new MulOp(MT_DIV);
+                                            printf("mulop -> DIV\n"); }
+    | MOD                               {   $$ = new MulOp(MT_MOD);
+                                            printf("mulop -> MOD\n"); }
                                         ;
 factor:
-    LP simple_expr RP                   { printf("factor -> LP expr RP\n"); }
-    | var                               { printf("factor -> var\n"); }
-    | call                              { printf("factor -> call\n"); }
-    | FLOAT                             { /* be careful */ printf("factor -> NUM\n"); }
-    | INTEGER                           { printf("factor -> INTEGER\n"); }
+    LP simple_expr RP                   {   $$ = new Factor($2);
+                                            printf("factor -> LP expr RP\n"); }
+    | var                               {   $$ = new Factor($1);
+                                            printf("factor -> var\n"); }
+    | call                              {   $$ = new Factor($1);
+                                            printf("factor -> call\n"); }
+    | FLOAT                             {   $$ = new Factor(new Float($1));
+                                            /* be careful */ 
+                                            printf("factor -> NUM\n"); }
+    | INTEGER                           {   $$ = new Factor(new Integer($1));
+                                            printf("factor -> INTEGER\n"); }
                                         ;
 call:
-    IDENTIFIER LP args RP               { printf("call -> identifier LP args RP\n"); }
+    IDENTIFIER LP args RP               {   $$ = new Call(new Identifier($1), $3);
+                                            printf("call -> identifier LP args RP\n"); }
                                         ;
 args:
-    arg_list                            { printf("args -> arg_list\n"); }
-    | /* empty */                       
+    arg_list                            {   $$ = new Args($1);
+                                            printf("args -> arg_list\n"); }
+    | /* empty */                       {   $$ = new Args(); }
                                         ;
 arg_list:
-    arg_list COMMA simple_expr          { printf("arg-list -> arg_list, expr\n"); }
-    | simple_expr                       { printf("arg-list -> simple_expr\n"); }
+    arg_list COMMA simple_expr          {   $$ = $1;
+                                            $$->push_back($3);
+                                            printf("arg-list -> arg_list, expr\n"); }
+    | simple_expr                       {   $$ = new ArgList();
+                                            $$->push_back($1);
+                                            printf("arg-list -> simple_expr\n"); }
                                         ;
 %%
 

@@ -29,6 +29,6 @@ $(NAME): $(OBJS)
 clean:
 	-rm -f *.o
 	-rm -f parser.hpp parser.cpp tokenizer.cpp mini
-	-rm -f tree.json
+	-rm -f *.json
 	-rm -f *.s
 	-rm -f *.ll

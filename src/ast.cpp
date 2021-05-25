@@ -17,7 +17,8 @@ std::string Node::Format(std::vector<base *> *children)
     {
         subtree += child->Visualize() + ", ";
     }
-    subtree[subtree.size() - 2] = ' ';
+    if(children->size()!=0)
+        subtree[subtree.size() - 2] = ' ';
     return subtree + "] }";
 }
 void Node::setName(std::string newName)
@@ -97,9 +98,9 @@ SysType::SysType(std::string datatype) : Node(datatype)
         dataType = CG_VOID;
 }
 
-TypeSpec::TypeSpec(std::string childtype) : Node("TypeSpec")
+TypeSpec::TypeSpec(std::string *childtype) : Node("TypeSpec")
 {
-    childType = new SysType(childtype);
+    childType = new SysType(*childtype);
 }
 std::string TypeSpec::Visualize()
 {
@@ -111,7 +112,7 @@ std::string Program::Visualize()
     return Format<Decl>(this->declList);
 }
 
-Param::Param(Identifier *iden, TypeSpec *typespec, bool isarray) : NodeWithChildren("Para"), identifier(iden), typeSpec(typespec), isArray(isarray)
+Param::Param(Identifier *iden, TypeSpec *typespec, bool isarray) : NodeWithChildren("Param"), identifier(iden), typeSpec(typespec), isArray(isarray)
 {
     this->children->push_back(dynamic_cast<Node *>(identifier));
     this->children->push_back(dynamic_cast<Node *>(typespec));
@@ -119,7 +120,10 @@ Param::Param(Identifier *iden, TypeSpec *typespec, bool isarray) : NodeWithChild
 
 std::string Params::Visualize()
 {
-    return Format<Param>(this->paramList);
+    if(this->isVoid)
+        return Format();
+    else
+        return Format<Param>(this->paramList);
 }
 
 std::string LocalDecls::Visualize()
@@ -176,35 +180,33 @@ std::string Factor::Visualize()
     switch (this->factorType)
     {
     case FT_SIMPLEEXPR:
-        Format<SimpleExpr>(this->simpleExpr);
-        break;
+        return Format<SimpleExpr>(this->simpleExpr);
     case FT_VAR:
-        Format<Variable>(this->variable);
-        break;
+        return Format<Variable>(this->variable);
     case FT_CALL:
-        Format<Call>(this->call);
-        break;
+        return Format<Call>(this->call);
     case FT_FLOAT:
-        Format<Float>(this->nfloat);
-        break;
+        return Format<Float>(this->nfloat);
     case FT_INTEGER:
-        Format<Integer>(this->integer);
-        break;
+        return Format<Integer>(this->integer);
     }
 }
 
 std::string Args::Visualize()
 {
-    return Format<SimpleExpr>(this->argList);
+    if(this->argList!=nullptr)
+        return Format<SimpleExpr>(this->argList);
+    else
+        return Format();
 }
 
-Term::Term(Term *term, MulOp *mulop, Factor *factor, bool isrec) : NodeWithChildren("Term"), term(term), mulOp(mulop), factor(factor), isRec(isrec)
+Term::Term(Factor *factor, MulOp *mulop, Term *term, bool isrec) : NodeWithChildren("Term"), factor(factor), mulOp(mulop), term(term), isRec(isrec)
 {
-    this->children->push_back(dynamic_cast<Node *>(this->term));
+    this->children->push_back(dynamic_cast<Node *>(this->factor));
     if (this->isRec)
     {
         this->children->push_back(dynamic_cast<Node *>(this->mulOp));
-        this->children->push_back(dynamic_cast<Node *>(this->factor));
+        this->children->push_back(dynamic_cast<Node *>(this->term));
     }
 }
 
@@ -217,16 +219,17 @@ Call::Call(Identifier *iden, Args *args) : NodeWithChildren("Call"), identifier(
 Variable::Variable(Identifier *iden, SimpleExpr *simpleexpr, bool isarray) : NodeWithChildren("Variable"), identifier(iden), simpleExpr(simpleexpr), isArray(isarray)
 {
     this->children->push_back(dynamic_cast<Node *>(identifier));
-    this->children->push_back(dynamic_cast<Node *>(simpleExpr));
+    if(this->isArray)
+        this->children->push_back(dynamic_cast<Node *>(simpleExpr));
 }
 
-AddiExpr::AddiExpr(AddiExpr *addiexpr, AddOp *addop, Term *term, bool isrec) : NodeWithChildren("AddiExpr"), addiExpr(addiexpr), addOp(addop), term(term), isRec(isrec)
+AddiExpr::AddiExpr(Term *term, AddOp *addop, AddiExpr *addiexpr, bool isrec) : NodeWithChildren("AddiExpr"), term(term), addOp(addop), addiExpr(addiexpr), isRec(isrec)
 {
-    this->children->push_back(dynamic_cast<Node *>(this->addiExpr));
+    this->children->push_back(dynamic_cast<Node *>(this->term));
     if (this->isRec)
     {
         this->children->push_back(dynamic_cast<Node *>(this->addOp));
-        this->children->push_back(dynamic_cast<Node *>(this->term));
+        this->children->push_back(dynamic_cast<Node *>(this->addiExpr));
     }
 }
 
@@ -289,4 +292,4 @@ Decl::Decl(std::string declname) : NodeWithChildren(declname) {}
 
 LocalDecls::LocalDecls(LocalList *locallist) : Decl("LocalDecls"), localList(locallist) {}
 
-Stmts::Stmts(StmtList *stmtlist) : Statement("LocalDecls"), stmtList(stmtlist) {}
+Stmts::Stmts(StmtList *stmtlist) : Statement("StmtList"), stmtList(stmtlist) {}
