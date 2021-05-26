@@ -42,3 +42,41 @@
 | Char | SysType |
 | UnderScore | Variable |
 | Void | Node |
+
+#### Graph
+
+```mermaid
+graph TB
+    Node-->NodeWithChildren
+    Node-->TypeSpec
+    Node-->Params
+    Node-->RelOp
+    Node-->AddOp
+    Node-->MulOp
+    Node-->Factor
+    Node-->Args
+    Node-->Identifier
+    Node-->SysType
+    Node-->Void
+    NodeWithChildren-->Decl
+    NodeWithChildren-->Param
+    NodeWithChildren-->Statement
+    NodeWithChildren-->SimpleExpr
+    NodeWithChildren-->Term
+    NodeWithChildren-->Call
+    NodeWithChildren-->Variable
+    Decl-->VarDecl
+    Decl-->FuncDecl
+    Decl-->LocalDecls
+    Statement-->Stmts
+    Statement-->ComStmt
+    Statement-->IterStmt
+    Statement-->SelectStmt
+    Statement-->RetStmt
+    Statement-->FuncStmt
+    Statement-->ExprStmt
+    SysType-->Integer
+    SysType-->Float
+    SysType-->Char
+    Variable-->UnderScore
+```
