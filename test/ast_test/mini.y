@@ -20,6 +20,7 @@ Program* root = nullptr;
 %union {
     int iVal;
     float fVal;
+    char cVal;
     std::string* sVal;
     Program *program;
     Identifier *identifier;
@@ -27,6 +28,7 @@ Program* root = nullptr;
     Integer *integer;
     Float *nfloat;
     Char *nchar;
+    String *nstring;
     UnderScore *underscore;
     Void *nvoid;
     Decl *decl;
@@ -230,6 +232,10 @@ return_stmt:
                                             printf("return_stmt -> return 0;\n"); }
     | RETURN FLOAT SEMI                 {   $$ = new RetStmt(new Float($2));
                                             printf("return_stmt -> return float;\n"); }
+    | RETURN CHAR SEMI                  {   $$ = new RetStmt(new Char($2)); 
+                                            printf("return_stmt -> return char;\n"); }
+    | RETURN STRING SEMI                {   $$ = new RetStmt(new String($2));
+                                            printf("return_stmt -> return string;\n"); }
     | RETURN expr_stmt                  {   $$ = new RetStmt($2);
                                             printf("return expr_stmt;\n"); }
                                         ;
@@ -320,10 +326,15 @@ factor:
     | call                              {   $$ = new Factor($1);
                                             printf("factor -> call\n"); }
     | FLOAT                             {   $$ = new Factor(new Float($1));
-                                            /* be careful */ 
-                                            printf("factor -> NUM\n"); }
+                                            printf("factor -> FLOAT\n"); }
     | INTEGER                           {   $$ = new Factor(new Integer($1));
                                             printf("factor -> INTEGER\n"); }
+    | CHAR                              {   $$ = new Factor(new Char($1));
+                                            // printf("%c\n", $1);
+                                            printf("factor -> CHAR\n"); }
+    | STRING                            {   $$ = new Factor(new String($1));
+                                            // printf("%s\n", (*$1).c_str());
+                                            printf("factor -> STRING\n"); }
                                         ;
 call:
     IDENTIFIER LP args RP               {   $$ = new Call(new Identifier($1), $3);

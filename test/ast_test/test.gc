@@ -8,15 +8,32 @@ func empty(void)(void)
     return;
 }
 
+func test_char(c char, s string)(ret char)
+{
+    return 'c';
+}
+func test_str(void)(ret string)
+{
+    return "test string";
+}
+
 func main(a int)(ret int)
 {
     int a;
-    int c;
+    int b;
     float arr[3];
+    char c;
+    string s;
+
     a = 1;
-    a, c = 1, 2;
+    a, b = 1, 2;
     arr[0], arr[1], arr[2] = 1.0, 2.0, 3.0;
-    c = foo(1.0, 2, arr);
+    b = foo(1.0, 2, arr);
+    c = 'a';
+    s = "this is a string";
+    c = test_char(c, s);
+    s = test_str();
+
     empty();
 
     if (a == 1)

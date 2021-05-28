@@ -1,5 +1,12 @@
 #include "ast.h"
 
+/*
+case FT_CHAR:
+    return Format<Char>(this->nchar);
+case FT_STRING:
+    return Format<String>(this->nstring);
+*/
+
 std::string Node::Format()
 {
     return "{ \"name\" : \"" + this->name + "\" }";
@@ -94,6 +101,8 @@ SysType::SysType(std::string datatype) : Node(datatype)
         dataType = CG_FLOAT;
     else if (datatype == "char")
         dataType = CG_CHAR;
+    else if (datatype == "string")
+        dataType = CG_STRING;
     else
         dataType = CG_VOID;
 }
@@ -165,6 +174,10 @@ std::string RetStmt::Visualize()
         return Format<Integer>(this->integer);
     case RET_FLOAT:
         return Format<Float>(this->nfloat);
+    case RET_CHAR:
+        return Format<Char>(this->nchar);
+    case RET_STRING:
+        return Format<String>(this->nstring);
     default:
         return Format<ExprStmt>(this->exprStmt);
     }
@@ -189,6 +202,10 @@ std::string Factor::Visualize()
         return Format<Float>(this->nfloat);
     case FT_INTEGER:
         return Format<Integer>(this->integer);
+    case FT_CHAR:
+        return Format<Char>(this->nchar);
+    case FT_STRING:
+        return Format<String>(this->nstring);
     }
 }
 

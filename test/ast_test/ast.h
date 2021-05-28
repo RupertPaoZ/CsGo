@@ -13,6 +13,7 @@ class SysType;
 class Integer;
 class Float;
 class Char;
+class String;
 class UnderScore;
 class Void;
 
@@ -62,6 +63,7 @@ enum BuildInType
     CG_INTEGER,
     CG_FLOAT,
     CG_CHAR,
+    CG_STRING,
     CG_VOID
 };
 
@@ -227,13 +229,17 @@ private:
         FT_VAR,
         FT_CALL,
         FT_FLOAT,
-        FT_INTEGER
+        FT_INTEGER,
+        FT_CHAR,
+        FT_STRING
     } factorType;
     SimpleExpr *simpleExpr;
     Variable *variable;
     Call *call;
     Float *nfloat;
     Integer *integer;
+    Char *nchar;
+    String *nstring;
 
 public:
     Factor(SimpleExpr *simpleexpr) : Node("factor"), simpleExpr(simpleexpr) { factorType = FT_SIMPLEEXPR; }
@@ -241,6 +247,8 @@ public:
     Factor(Call *call) : Node("factor"), call(call) { factorType = FT_CALL; }
     Factor(Float *nfloat) : Node("factor"), nfloat(nfloat) { factorType = FT_FLOAT; }
     Factor(Integer *inte) : Node("factor"), integer(inte) { factorType = FT_INTEGER; }
+    Factor(Char *nchar) : Node("factor"), nchar(nchar) { factorType = FT_CHAR; }
+    Factor(String *nstring) : Node("factor"), nstring(nstring) { factorType = FT_STRING; }
     std::string Visualize();
     ~Factor() {}
 };
@@ -428,10 +436,14 @@ private:
     {
         RET_INTEGER,
         RET_FLOAT,
+        RET_CHAR,
+        RET_STRING,
         RET_EXPSTMT
     } retType;
     Integer *integer;
     Float *nfloat;
+    Char *nchar;
+    String *nstring;
     ExprStmt *exprStmt;
 
 public:
@@ -442,6 +454,14 @@ public:
     RetStmt(Float *nfloat) : Statement("RetStmt"), nfloat(nfloat)
     {
         retType = RET_FLOAT;
+    }
+    RetStmt(Char *nchar) : Statement("RetStmt"), nchar(nchar)
+    {
+        retType = RET_CHAR;
+    }
+    RetStmt(String *nstring) : Statement("RetStmt"), nstring(nstring)
+    {
+        retType = RET_STRING;
     }
     RetStmt(ExprStmt *exprstmt) : Statement("RetStmt"), exprStmt(exprstmt)
     {
@@ -473,7 +493,7 @@ private:
     int value;
 
 public:
-    Integer(int v) : SysType("Integer"), value(v) {}
+    Integer(int v) : SysType("integer"), value(v) {}
     ~Integer() {}
 };
 class Float : public SysType
@@ -482,7 +502,7 @@ private:
     float value;
 
 public:
-    Float(float v) : SysType("Float"), value(v) {}
+    Float(float v) : SysType("float"), value(v) {}
     ~Float() {}
 };
 class Char : public SysType
@@ -491,8 +511,20 @@ private:
     char value;
 
 public:
-    Char(char v) : SysType("Char"), value(v) {}
+    Char(char v) : SysType("char"), value(v) {}
     ~Char() {}
+};
+
+class String : public SysType
+{
+private:
+    std::string value;
+public:
+    String(std::string* v) : SysType("string"), value(*v){
+        value = value.substr(1, value.length()-2);
+        std::cout << value << std::endl;
+    }
+    ~String() {}
 };
 
 class VarDecl : public Decl
