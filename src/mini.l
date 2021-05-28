@@ -1,6 +1,8 @@
 %{
 #include <stdio.h>
 #include <string>
+#include <sstream>
+#include "ast.h"
 #include "parser.hpp"
 extern "C" int yywrap() {return 1;}
 %}
@@ -43,7 +45,7 @@ extern "C" int yywrap() {return 1;}
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return VOID; 
                                     }
-"int"|"float"                       {
+"int"|"float"|"char"|"string"       {
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return SYS_TYPE;
                                     }
@@ -63,5 +65,15 @@ extern "C" int yywrap() {return 1;}
                                         yylval.iVal = itmp; 
                                         return INTEGER; 
                                     }
+[\'][a-zA-Z0-9][\']                 {
+                                        char ctmp;
+                                        sscanf(yytext, "\'%c\'", &ctmp);
+                                        yylval.cVal = ctmp;
+                                        return CHAR;
+                                    }
+[\"][a-zA-Z0-9_ ]*[\"]              {
+                                        yylval.sVal = new std::string(yytext, yyleng);
+                                        return STRING;
+                                    }
 
-%%                            
+%%      
