@@ -43,7 +43,7 @@ extern "C" int yywrap() {return 1;}
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return VOID; 
                                     }
-"int"|"float"                       {
+"int"|"float"|"char"|"string"       {
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return SYS_TYPE;
                                     }
@@ -63,5 +63,10 @@ extern "C" int yywrap() {return 1;}
                                         yylval.iVal = itmp; 
                                         return INTEGER; 
                                     }
-
+[a-zA-Z]                            {
+                                        char ctmp;
+                                        sscanf(yytext, "%c", &ctmp);
+                                        yylval.cVal = ctmp;
+                                        return CHAR;
+                                    }
 %%                            

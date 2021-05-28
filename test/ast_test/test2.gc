@@ -1,0 +1,4 @@
+func main(a int)(ret int)
+{
+    s = "a string";
+}

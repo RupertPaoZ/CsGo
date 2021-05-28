@@ -20,6 +20,7 @@ Program* root = nullptr;
 %union {
     int iVal;
     float fVal;
+    char cVal;
     std::string* sVal;
     Program *program;
     Identifier *identifier;
@@ -27,6 +28,10 @@ Program* root = nullptr;
     Integer *integer;
     Float *nfloat;
     Char *nchar;
+<<<<<<< HEAD
+    String *nstring;
+=======
+>>>>>>> main
     UnderScore *underscore;
     Void *nvoid;
     Decl *decl;
@@ -75,8 +80,9 @@ Program* root = nullptr;
         FUNC RETURN
 
 %token<iVal> INTEGER
-%token<sVal> IDENTIFIER SYS_TYPE VOID
+%token<sVal> IDENTIFIER SYS_TYPE VOID STRING
 %token<fVal> FLOAT
+%token<cVal> CHAR
 
 %type<program>                          program
 %type<decllist>                         decl_list
@@ -134,7 +140,11 @@ decl_list:
                                             printf("decl_list -> decl\n"); }
                                         ;
 decl: 
+<<<<<<< HEAD
+    var_decl                            {   $$ = $1;
+=======
     var_decl                            {   $$=$1;
+>>>>>>> main
                                             printf("decl -> var_decl\n"); }
     | fun_decl                          {   $$ = $1;
                                             printf("decl -> fun_decl\n"); }
@@ -229,6 +239,13 @@ return_stmt:
                                             printf("return_stmt -> return 0;\n"); }
     | RETURN FLOAT SEMI                 {   $$ = new RetStmt(new Float($2));
                                             printf("return_stmt -> return float;\n"); }
+<<<<<<< HEAD
+    | RETURN CHAR SEMI                  {   $$ = new RetStmt(new Char($2)); 
+                                            printf("return_stmt -> return char;\n"); }
+    | RETURN STRING SEMI                {   $$ = new RetStmt(new String($2));
+                                            printf("return_stmt -> return string;\n"); }
+=======
+>>>>>>> main
     | RETURN expr_stmt                  {   $$ = new RetStmt($2);
                                             printf("return expr_stmt;\n"); }
                                         ;
@@ -319,10 +336,22 @@ factor:
     | call                              {   $$ = new Factor($1);
                                             printf("factor -> call\n"); }
     | FLOAT                             {   $$ = new Factor(new Float($1));
+<<<<<<< HEAD
+                                            printf("factor -> FLOAT\n"); }
+    | INTEGER                           {   $$ = new Factor(new Integer($1));
+                                            printf("factor -> INTEGER\n"); }
+    | CHAR                              {   $$ = new Factor(new Char($1));
+                                            // printf("%c\n", $1);
+                                            printf("factor -> CHAR\n"); }
+    | STRING                            {   $$ = new Factor(new String($1));
+                                            // printf("%s\n", (*$1).c_str());
+                                            printf("factor -> STRING\n"); }
+=======
                                             /* be careful */ 
                                             printf("factor -> NUM\n"); }
     | INTEGER                           {   $$ = new Factor(new Integer($1));
                                             printf("factor -> INTEGER\n"); }
+>>>>>>> main
                                         ;
 call:
     IDENTIFIER LP args RP               {   $$ = new Call(new Identifier($1), $3);
