@@ -170,16 +170,10 @@ std::string RetStmt::Visualize()
 {
     switch (this->retType)
     {
-    case RET_INTEGER:
-        return Format<Integer>(this->integer);
-    case RET_FLOAT:
-        return Format<Float>(this->nfloat);
-    case RET_CHAR:
-        return Format<Char>(this->nchar);
-    case RET_STRING:
-        return Format<String>(this->nstring);
+    case RET_VOID:
+        return Format<Void>(this->nvoid);
     default:
-        return Format<ExprStmt>(this->exprStmt);
+        return Format<Exprs>(this->exprs);
     }
 }
 

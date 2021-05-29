@@ -430,43 +430,33 @@ public:
     IterStmt(SimpleExpr *simpleexpr, Statement *stmt);
     ~IterStmt() {}
 };
+class Void : public Node
+{
+public:
+    Void() : Node("void") {}
+    ~Void() {}
+};
 class RetStmt : public Statement
 {
 private:
     enum
     {
-        RET_INTEGER,
-        RET_FLOAT,
-        RET_CHAR,
-        RET_STRING,
-        RET_EXPSTMT
+        RET_VOID,
+        RET_SIMEXPR
     } retType;
-    Integer *integer;
-    Float *nfloat;
-    Char *nchar;
-    String *nstring;
-    ExprStmt *exprStmt;
+    Exprs *exprs;
+    Void *nvoid;
 
 public:
-    RetStmt(Integer *inte) : Statement("RetStmt"), integer(inte)
+    RetStmt() : Statement("RetStmt"), exprs(nullptr)
     {
-        retType = RET_INTEGER;
+        retType = RET_VOID;
+        nvoid = new Void();
     }
-    RetStmt(Float *nfloat) : Statement("RetStmt"), nfloat(nfloat)
+    RetStmt(ExprList *exprlist) : Statement("RetStmt"), nvoid(nullptr)
     {
-        retType = RET_FLOAT;
-    }
-    RetStmt(Char *nchar) : Statement("RetStmt"), nchar(nchar)
-    {
-        retType = RET_CHAR;
-    }
-    RetStmt(String *nstring) : Statement("RetStmt"), nstring(nstring)
-    {
-        retType = RET_STRING;
-    }
-    RetStmt(ExprStmt *exprstmt) : Statement("RetStmt"), exprStmt(exprstmt)
-    {
-        retType = RET_EXPSTMT;
+        retType = RET_SIMEXPR;
+        this->exprs = new Exprs(exprlist);
     }
     std::string Visualize();
     ~RetStmt() {}
@@ -481,12 +471,6 @@ public:
     Args(ArgList *arglist = nullptr) : Node("Args"), argList(arglist) {}
     std::string Visualize();
     ~Args() {}
-};
-class Void : public Node
-{
-public:
-    Void() : Node("void") {}
-    ~Void() {}
 };
 class Integer : public SysType
 {

@@ -228,16 +228,10 @@ iteration_stmt:
                                             printf("while (expr) stmt\n"); }
                                         ;
 return_stmt:
-    RETURN INTEGER SEMI                 {   $$ = new RetStmt(new Integer($2));
-                                            printf("return_stmt -> return 0;\n"); }
-    | RETURN FLOAT SEMI                 {   $$ = new RetStmt(new Float($2));
-                                            printf("return_stmt -> return float;\n"); }
-    | RETURN CHAR SEMI                  {   $$ = new RetStmt(new Char($2)); 
-                                            printf("return_stmt -> return char;\n"); }
-    | RETURN STRING SEMI                {   $$ = new RetStmt(new String($2));
-                                            printf("return_stmt -> return string;\n"); }
-    | RETURN expr_stmt                  {   $$ = new RetStmt($2);
-                                            printf("return expr_stmt;\n"); }
+    RETURN SEMI                         {   $$ = new RetStmt();
+                                            printf("return_stmt -> return ;\n"); }
+    | RETURN expr_list SEMI             {   $$ = new RetStmt($2);
+                                            printf("return expr_list;\n"); }
                                         ;
 function_stmt:
     call SEMI                           {   $$ = new FuncStmt($1);
