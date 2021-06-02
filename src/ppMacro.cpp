@@ -6,7 +6,6 @@ std::string preProcess(std::string filename)
     std::ofstream fout(filename + "pp");
     std::string fileContent;
     std::vector<macroTable> Macros;
-    // std::stringstream processtream;
 
     while (getline(fin, fileContent))
     {
@@ -48,13 +47,12 @@ std::string preProcess(std::string filename)
             {
                 for (auto macro : Macros)
                 {
-                    if (macro.match(fileContent))
+                    while (macro.match(fileContent))
                     {
                         fileContent = macro.replace(fileContent);
                     }
                 }
                 fout << fileContent << std::endl;
-                // processtream << fileContent << std::endl;
             }
         }
     }
