@@ -43,5 +43,5 @@ func main(void)(void){
         printf("%d\n",arr[i]);
         i=i+1;
     }
-    return;
+    return 0;
 }
