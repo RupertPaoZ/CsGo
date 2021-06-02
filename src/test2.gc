@@ -1,0 +1,47 @@
+func qsort(arr[] int, begin int, end int)(void){
+    if(begin<end){
+        int i;
+        int j;
+        int key;
+        i, j, key = begin, end, arr[begin];
+        while(i<j){
+            while(i<j && arr[j]>key){
+                j=j-1;
+            }
+            if(i<j){
+                arr[i]=arr[j];
+                i=i+1;
+            }
+            while(i<j && arr[i]<key){
+                i=i+1;
+            }
+            if(i<j){
+                arr[j]=arr[i];
+                j=j-1;
+            }
+        }
+        arr[i]=key;
+        qsort(arr[], begin, i-1);
+        qsort(arr[], i+1, end);
+    }
+    return;
+}
+
+func main(void)(void){
+    int arr[10000];
+    int len;
+    int i;
+    scanf("%d",len);
+    i=0;
+    while(i<len){
+        scanf("%d",arr[i]);
+        i=i+1;
+    }
+    qsort(arr[], 0, len-1);
+    i=0;
+    while(i<len){
+        printf("%d\n",arr[i]);
+        i=i+1;
+    }
+    return;
+}
