@@ -72,3 +72,11 @@ lli test.ll
 ./BinGen.sh test.ll
 ```
 
+* 宏
+
+加入无参数和有参数宏，实例如下：
+```
+#define INC(x) x=x+1
+#define MAX 100
+```
+编译时会生成预处理文件.gcpp

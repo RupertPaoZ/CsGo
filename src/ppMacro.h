@@ -1,0 +1,138 @@
+#ifndef PPMACRO_H
+#define PPMACRO_H
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <map>
+
+std::string preProcess(std::string filename);
+
+class macroTable
+{
+    friend std::string preProcess(std::string filename);
+
+private:
+    std::string Name;
+    bool withArgs;
+    std::vector<std::string> srcArgs;
+    std::vector<std::string> defs;
+    bool match(std::string token)
+    {
+        if (token.find(this->Name) != token.npos)
+            return true;
+        else
+            return false;
+    }
+
+    std::string replace(std::string input)
+    {
+        int pos = input.find(this->Name);
+        if (!withArgs)
+        {
+            std::string head = input.substr(0, pos), tail = input.substr(pos + this->Name.length());
+            return head + " " + this->defs[0] + " " + tail;
+        }
+        else
+        {
+            std::string head = input.substr(0, pos), cache = input.substr(pos);
+            std::string tail = cache.substr(cache.find(')') + 1), body = cache.substr(this->Name.length() + 1, cache.find(')') - this->Name.length());
+            cache.clear();
+            std::vector<std::string> args;
+            for (int i = 0; i < body.length(); i++)
+            {
+                if (body[i] == ',' || body[i] == ' ' || body[i] == ')')
+                {
+                    if (cache.length() != 0)
+                    {
+                        args.push_back(cache);
+                        cache.clear();
+                    }
+                }
+                else
+                {
+                    cache += body[i];
+                }
+            }
+            if (args.size() != this->srcArgs.size())
+            {
+                perror("Wrong MACRO ARGS!");
+            }
+            for (int i = 0; i < this->srcArgs.size(); i++)
+            {
+                for (auto &def : defs)
+                {
+                    if (this->srcArgs[i] == def)
+                    {
+                        def = args[i];
+                    }
+                }
+            }
+            cache.clear();
+            for (auto def : defs)
+            {
+                cache += def;
+            }
+            return head + " " + cache + " " + tail;
+        }
+    }
+
+public:
+    macroTable(std::string firstPart, std::string secondPart)
+    {
+        if (firstPart.find('(') == firstPart.npos)
+        {
+            this->Name = firstPart;
+            this->defs.push_back(secondPart);
+            withArgs = false;
+        }
+        else
+        {
+            withArgs = true;
+            int pos = firstPart.find('(');
+            std::string cache;
+            this->Name = firstPart.substr(0, pos);
+            cache.clear();
+            for (int i = pos + 1; i < firstPart.length(); i++)
+            {
+                if (firstPart[i] == ',' || firstPart[i] == ' ' || firstPart[i] == ')')
+                {
+                    if (cache.length() != 0)
+                    {
+                        this->srcArgs.push_back(cache);
+                        cache.clear();
+                    }
+                }
+                else
+                {
+                    cache += firstPart[i];
+                }
+            }
+            cache.clear();
+            for (int i = 0; i < secondPart.length(); i++)
+            {
+                if ((!isalnum(secondPart[i]) && secondPart[i] != '_') || i == (secondPart.length() - 1))
+                {
+                    if (cache.length() != 0)
+                    {
+                        this->defs.push_back(cache);
+                        cache.clear();
+                    }
+                    std::string stack;
+                    stack.push_back(secondPart[i]);
+                    this->defs.push_back(stack);
+                }
+                else
+                {
+                    cache += secondPart[i];
+                }
+            }
+        }
+    }
+
+    ~macroTable() {}
+};
+
+#endif

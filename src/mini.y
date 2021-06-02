@@ -1,4 +1,5 @@
 %{
+#include "ppMacro.h"
 #include "ast.h"
 #include "CodeGenerator.h"
 #include <string>
@@ -380,7 +381,7 @@ int main(int argc, char** argv) {
         printf("Please provide the file's name\n");
     } 
     else if (argc == 2) {
-        if ((yyin = fopen(argv[1], "r")) == NULL){
+        if ((yyin = fopen(preProcess(std::string(argv[1])).c_str(), "r")) == NULL){
 	        printf("Can't open file %s\n", argv[1]);
 	        return 1;
 	    }

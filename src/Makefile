@@ -9,7 +9,7 @@ CXXFLAGS =  `$(LLVM_CONFIG) --cppflags` -std=c++14 $(NO_WARNING)
 LDFLAGS = `$(LLVM_CONFIG) --ldflags`
 LIBS = `$(LLVM_CONFIG) --libs --system-libs`
 
-OBJS = parser.o tokenizer.o ast.o CodeGenerator.o
+OBJS = parser.o tokenizer.o ppMacro.o ast.o CodeGenerator.o
 
 all : $(NAME)
 
@@ -21,7 +21,7 @@ parser.hpp: parser.cpp
 tokenizer.cpp: ${NAME}.l
 	flex -o tokenizer.cpp ${NAME}.l
 
-%.o: %.cpp ast.h CodeGenerator.h
+%.o: %.cpp ppMacro.h ast.h CodeGenerator.h
 	g++ -c $(CXXFLAGS) -g -o $@ $< 
 
 $(NAME): $(OBJS)
@@ -34,3 +34,5 @@ clean:
 	-rm -f *.json
 	-rm -f *.s
 	-rm -f *.ll
+	-rm -f *.out
+	-rm -f *.gcpp
