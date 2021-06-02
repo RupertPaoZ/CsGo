@@ -27,7 +27,7 @@ func qsort(arr[] int, begin int, end int)(void){
     return;
 }
 
-func main(void)(void){
+func main(void)(ret int){
     int arr[10000];
     int len;
     int i;
