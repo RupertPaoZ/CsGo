@@ -42,6 +42,33 @@ std::string NodeWithChildren::Visualize()
     return Format<Node>(this->children);
 }
 
+LogOp::LogOp(LogType logtype) : Node("LogOp"), logType(logtype)
+{
+    switch (logtype)
+    {
+    case LOG_AND:
+        this->setName("AND");
+        break;
+    // case REL_LT:
+    //     this->setName("LT");
+    //     break;
+    // case REL_GE:
+    //     this->setName("GE");
+    //     break;
+    // case REL_GT:
+    //     this->setName("GT");
+    //     break;
+    // case REL_EQ:
+    //     this->setName("EQUAL");
+    //     break;
+    // case REL_UNE:
+    //     this->setName("UNEQUAL");
+    //     break;
+    default:
+        break;
+    }
+}
+
 RelOp::RelOp(RelType reltype) : Node("RelOp"), relType(reltype)
 {
     switch (reltype)
@@ -230,8 +257,18 @@ Call::Call(Identifier *iden, Args *args) : NodeWithChildren("Call"), identifier(
 Variable::Variable(Identifier *iden, SimpleExpr *simpleexpr, bool isarray) : NodeWithChildren("Variable"), identifier(iden), simpleExpr(simpleexpr), isArray(isarray)
 {
     this->children->push_back(dynamic_cast<Node *>(identifier));
-    if (this->isArray)
+    if (this->isArray && this->simpleExpr!=nullptr)
         this->children->push_back(dynamic_cast<Node *>(simpleExpr));
+}
+
+LogicExpr::LogicExpr(SimpleExpr *simpleexpr , LogOp *logop,  LogicExpr *logicexpr, bool islogicexpr) : NodeWithChildren("LogicExpr"), simpleExpr(simpleexpr), logOp(logop), logicExpr(logicexpr), isLogicExpr(islogicexpr)
+{
+    this->children->push_back(dynamic_cast<Node *>(this->simpleExpr));
+    if (this->isLogicExpr)
+    {
+        this->children->push_back(dynamic_cast<Node *>(this->logOp));
+        this->children->push_back(dynamic_cast<Node *>(this->logicExpr));
+    }
 }
 
 AddiExpr::AddiExpr(Term *term, AddOp *addop, AddiExpr *addiexpr, bool isrec) : NodeWithChildren("AddiExpr"), term(term), addOp(addop), addiExpr(addiexpr), isRec(isrec)
@@ -269,17 +306,17 @@ ExprStmt::ExprStmt(Vars *vars, Exprs *exprs, bool isnull) : Statement("ExprStmt"
     }
 }
 
-SelectStmt::SelectStmt(SimpleExpr *simpleexpr, Statement *ifstmt, Statement *elstmt, bool isifelse) : Statement("SelectStmt"), simpleExpr(simpleexpr), ifStmt(ifstmt), elStmt(elstmt), isIfelse(isifelse)
+SelectStmt::SelectStmt(LogicExpr *logicexpr, Statement *ifstmt, Statement *elstmt, bool isifelse) : Statement("SelectStmt"), logicExpr(logicexpr), ifStmt(ifstmt), elStmt(elstmt), isIfelse(isifelse)
 {
-    this->children->push_back(dynamic_cast<Node *>(simpleExpr));
+    this->children->push_back(dynamic_cast<Node *>(logicExpr));
     this->children->push_back(dynamic_cast<Node *>(ifStmt));
     if (isIfelse)
         this->children->push_back(dynamic_cast<Node *>(elStmt));
 }
 
-IterStmt::IterStmt(SimpleExpr *simpleexpr, Statement *stmt) : Statement("IterStmt"), simpleExpr(simpleexpr), statement(stmt)
+IterStmt::IterStmt(LogicExpr *logicexpr, Statement *stmt) : Statement("IterStmt"), logicExpr(logicexpr), statement(stmt)
 {
-    this->children->push_back(dynamic_cast<Node *>(this->simpleExpr));
+    this->children->push_back(dynamic_cast<Node *>(this->logicExpr));
     this->children->push_back(dynamic_cast<Node *>(this->statement));
 }
 

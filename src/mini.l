@@ -5,6 +5,25 @@
 #include "ast.h"
 #include "parser.hpp"
 extern "C" int yywrap() {return 1;}
+int clean_string () {
+    char* mystr;
+    mystr = strdup(yytext+1) ; // copy yytext and remove leading "
+    if (!mystr) return 1;
+    mystr[yyleng-2] = '\0';    // remove trailing "
+    for (int i = 0, j = 0; i <= strlen(mystr); i++, j++) { // "<=" and not "<" to get /0, i : mystr indice and j : yytext indice
+        if (mystr[i] == '\\') {
+            i++;
+            if (mystr[i] == 'n')        yytext[j]='\n';
+            else if (mystr[i] == 't')   yytext[j]='\t';
+            else yytext[j] = mystr[i];
+        }
+        else yytext[j] = mystr[i];
+    }
+    yyleng=strlen(yytext);
+    free(mystr);
+    return 0 ;
+}
+
 %}
 
 %%
@@ -59,7 +78,7 @@ extern "C" int yywrap() {return 1;}
                                         yylval.fVal = ftmp;
                                         return FLOAT; 
                                     }
-[0-9]+                              {
+(0|[1-9][0-9]*)                     {
                                         int itmp;
                                         sscanf(yytext, "%d", &itmp);
                                         yylval.iVal = itmp; 
@@ -71,7 +90,8 @@ extern "C" int yywrap() {return 1;}
                                         yylval.cVal = ctmp;
                                         return CHAR;
                                     }
-[\"][a-zA-Z0-9_ ]*[\"]              {
+\"(\\.|[^"])*\"                     {
+                                        clean_string();
                                         yylval.sVal = new std::string(yytext, yyleng);
                                         return STRING;
                                     }

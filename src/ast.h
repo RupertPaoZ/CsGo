@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <vector>
+#include <llvm/IR/Value.h>
+
+class CodeGenerator;
 
 /*Node of the tree*/
 class Node;
@@ -64,7 +67,13 @@ enum BuildInType
     CG_FLOAT,
     CG_CHAR,
     CG_STRING,
-    CG_VOID
+    CG_VOID,
+    CG_LONG
+};
+
+enum LogType
+{
+    LOG_AND
 };
 
 enum RelType
@@ -105,6 +114,7 @@ protected:
 public:
     Node(std::string nodename) : name(nodename) {}
     virtual std::string Visualize() { return Format(); }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) = 0;
     virtual ~Node() {}
 };
 
@@ -116,7 +126,22 @@ protected:
 public:
     NodeWithChildren(std::string name);
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~NodeWithChildren() { delete children; }
+};
+
+class LogOp : public Node
+{
+private:
+    LogType logType;
+
+public:
+    LogOp(LogType logtype);
+    LogType getOpType(){
+        return logType;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
+    ~LogOp() {}
 };
 
 class RelOp : public Node
@@ -126,6 +151,10 @@ private:
 
 public:
     RelOp(RelType reltype);
+    RelType getOpType(){
+        return relType;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~RelOp() {}
 };
 
@@ -136,6 +165,10 @@ private:
 
 public:
     AddOp(bool isplus = true);
+    bool getOpType(){
+        return isPuls;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~AddOp() {}
 };
 
@@ -146,6 +179,10 @@ private:
 
 public:
     MulOp(MulType multype);
+    MulType getOpType(){
+        return mulType;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~MulOp() {}
 };
 
@@ -156,7 +193,11 @@ private:
 
 public:
     Program(DeclList *decllist) : Node("Program"), declList(decllist) {}
+    DeclList* getDeclList(){
+        return declList;
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Program() {}
 };
 
@@ -167,6 +208,10 @@ private:
 
 public:
     SysType(std::string datatype);
+    BuildInType getType(){
+        return dataType;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~SysType() {}
 };
 
@@ -177,7 +222,11 @@ private:
 
 public:
     TypeSpec(std::string *childtype);
+    BuildInType getType(){
+        return childType->getType();
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~TypeSpec() { delete childType; }
 };
 
@@ -188,6 +237,10 @@ private:
 
 public:
     Identifier(std::string *id) : Node("Identifier"), ID(*id) {}
+    std::string getID(){
+        return ID;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Identifier() {}
 };
 class Param : public NodeWithChildren
@@ -199,6 +252,16 @@ private:
 
 public:
     Param(Identifier *iden, TypeSpec *typespec, bool isarray = false);
+    BuildInType getType(){
+        return typeSpec->getType();
+    }
+    std::string getName(){
+        return identifier->getID();
+    }
+    bool getIsArray(){
+        return isArray;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Param() {}
 };
 
@@ -211,14 +274,44 @@ private:
 public:
     Params() : Node("Void"), isVoid(true) {}
     Params(ParamList *paramlist) : Node("Params"), paramList(paramlist), isVoid(false) {}
+    // std::vector<BuildInType> getTypes(){
+    //     std::vector<BuildInType> argTypes;
+    //     for(auto &thisParam: *(this->paramList)){
+    //         argTypes.push_back(thisParam->getType());
+    //     }
+    //     return argTypes;
+    // }
+    ParamList* getParamList(){
+        return paramList;
+    }
+    bool getVoid(){
+        return isVoid;
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Params() {}
 };
 class Statement : public NodeWithChildren
 {
 public:
     Statement(std::string stmtname) : NodeWithChildren(stmtname) {}
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Statement() {}
+};
+
+class Call : public NodeWithChildren
+{
+private:
+    Identifier *identifier;
+    Args *args;
+
+public:
+    Call(Identifier *iden, Args *args);
+    std::string getCallName(){
+        return identifier->getID();
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
+    ~Call() {}
 };
 
 class Factor : public Node
@@ -250,7 +343,25 @@ public:
     Factor(Integer *inte) : Node("factor"), integer(inte) { factorType = FT_INTEGER; }
     Factor(Char *nchar) : Node("factor"), nchar(nchar) { factorType = FT_CHAR; }
     Factor(String *nstring) : Node("factor"), nstring(nstring) { factorType = FT_STRING; }
+    std::string getCallName(){
+        if(factorType==FT_CALL){
+            return call->getCallName();
+        }
+        else{
+            return "";
+        }
+    }
+    Variable* getVariable(bool& isString){
+        if(factorType==FT_STRING) isString = true;
+        else isString = false;
+        if(factorType==FT_VAR) return variable;
+        return nullptr;
+    }
+    bool isString(){
+        return factorType==FT_STRING;
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Factor() {}
 };
 
@@ -264,18 +375,18 @@ private:
 
 public:
     Term(Factor *factor, MulOp *mulop = nullptr, Term *term = nullptr, bool isrec = false);
+    std::string getCallName(){
+        return factor->getCallName();
+    }
+    Variable* getVariable(bool& isString){
+        if(mulOp!=nullptr){
+            isString = false;
+            return nullptr;
+        }
+        return factor->getVariable(isString);
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Term() {}
-};
-
-class Call : public NodeWithChildren
-{
-private:
-    Identifier *identifier;
-    Args *args;
-
-public:
-    Call(Identifier *iden, Args *args);
-    ~Call() {}
 };
 
 class Variable : public NodeWithChildren
@@ -288,6 +399,15 @@ private:
 public:
     Variable() : NodeWithChildren("UnderScore"), identifier(nullptr), simpleExpr(nullptr), isArray(false) {}
     Variable(Identifier *iden, SimpleExpr *simpleexpr = nullptr, bool isarray = false);
+    std::string getID(){
+        if(identifier==nullptr) return "";
+        return identifier->getID();
+    }
+    bool isPointer(){
+        if(simpleExpr==nullptr && isArray)return true;
+        else return false;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Variable() {}
 };
 
@@ -295,6 +415,7 @@ class UnderScore : public Variable
 {
 public:
     UnderScore() {}
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~UnderScore() {}
 };
 
@@ -308,6 +429,17 @@ private:
 
 public:
     AddiExpr(Term *term, AddOp *addop = nullptr, AddiExpr *addiexpr = nullptr, bool isrec = false);
+    std::string getCallName(){
+        return term->getCallName();
+    }
+    Variable* getVariable(bool& isString){
+        if(addOp!=nullptr){
+            isString = false;
+            return nullptr;
+        }
+        return term->getVariable(isString);
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~AddiExpr() {}
 };
 
@@ -321,13 +453,49 @@ private:
 
 public:
     SimpleExpr(AddiExpr *addiexpr1, RelOp *relop = nullptr, AddiExpr *addiexpr2 = nullptr, bool iscompareexpr = false);
+    std::string getCallName(){
+        return addiExpr1->getCallName();
+    }
+    Variable* getVariable(bool& isString){
+        if(relOp!=nullptr){
+            isString = false;
+            return nullptr;
+        }
+        return addiExpr1->getVariable(isString);
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~SimpleExpr() {}
+};
+
+class LogicExpr : public NodeWithChildren
+{
+private:
+    LogicExpr *logicExpr;
+    LogOp *logOp;
+    SimpleExpr *simpleExpr;
+    bool isLogicExpr;
+
+public:
+    LogicExpr(SimpleExpr *simpleexpr , LogOp *logop = nullptr,  LogicExpr *logicexpr  = nullptr, bool islogicexpr = false);
+    // std::string getCallName(){
+    //     return addiExpr1->getCallName();
+    // }
+    // Variable* getVariable(bool& isString){
+    //     if(relOp!=nullptr){
+    //         isString = false;
+    //         return nullptr;
+    //     }
+    //     return addiExpr1->getVariable(isString);
+    // }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
+    ~LogicExpr() {}
 };
 
 class Decl : public NodeWithChildren
 {
 public:
     Decl(std::string declname);
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Decl() {}
 };
 
@@ -339,6 +507,7 @@ private:
 public:
     LocalDecls(LocalList *locallist);
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~LocalDecls() {}
 };
 
@@ -350,6 +519,7 @@ private:
 public:
     Stmts(StmtList *stmtlist);
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Stmts() {}
 };
 class ComStmt : public Statement
@@ -360,6 +530,7 @@ private:
 
 public:
     ComStmt(LocalDecls *localdecls, Stmts *stmts);
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~ComStmt() {}
 };
 class Vars : public Node
@@ -369,7 +540,11 @@ private:
 
 public:
     Vars(VarList *varlist) : Node("Vars"), varList(varlist) {}
+    VarList* getVarlist(){
+        return varList;
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Vars() {}
 };
 
@@ -380,7 +555,11 @@ private:
 
 public:
     Exprs(ExprList *exprlist) : Node("Exprs"), exprList(exprlist) {}
+    ExprList* getExprlist(){
+        return exprList;
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Exprs() {}
 };
 
@@ -394,6 +573,7 @@ private:
 public:
     ExprStmt(Vars *vars = nullptr, Exprs *exprs = nullptr, bool isnull = true);
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~ExprStmt() {}
 };
 
@@ -405,35 +585,39 @@ private:
 public:
     FuncStmt(Call *call) : Statement("FuncStmt"), call(call) {}
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~FuncStmt() {}
 };
 
 class SelectStmt : public Statement
 {
 private:
-    SimpleExpr *simpleExpr;
+    LogicExpr *logicExpr;
     Statement *ifStmt;
     Statement *elStmt;
     bool isIfelse;
 
 public:
-    SelectStmt(SimpleExpr *simpleexpr, Statement *ifstmt, Statement *elstmt = nullptr, bool isifelse = false);
+    SelectStmt(LogicExpr *logicexpr, Statement *ifstmt, Statement *elstmt = nullptr, bool isifelse = false);
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~SelectStmt() {}
 };
 class IterStmt : public Statement
 {
 private:
-    SimpleExpr *simpleExpr;
+    LogicExpr *logicExpr;
     Statement *statement;
 
 public:
-    IterStmt(SimpleExpr *simpleexpr, Statement *stmt);
+    IterStmt(LogicExpr *logicexpr, Statement *stmt);
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~IterStmt() {}
 };
 class Void : public Node
 {
 public:
     Void() : Node("void") {}
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Void() {}
 };
 class RetStmt : public Statement
@@ -459,6 +643,7 @@ public:
         this->exprs = new Exprs(exprlist);
     }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~RetStmt() {}
 };
 
@@ -469,9 +654,14 @@ private:
 
 public:
     Args(ArgList *arglist = nullptr) : Node("Args"), argList(arglist) {}
+    ArgList* getArgList(){
+        return argList;
+    }
     std::string Visualize();
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Args() {}
 };
+
 class Integer : public SysType
 {
 private:
@@ -479,6 +669,10 @@ private:
 
 public:
     Integer(int v) : SysType("integer"), value(v) {}
+    int getValue(){
+        return value;
+    }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Integer() {}
 };
 class Float : public SysType
@@ -488,6 +682,7 @@ private:
 
 public:
     Float(float v) : SysType("float"), value(v) {}
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Float() {}
 };
 class Char : public SysType
@@ -497,6 +692,7 @@ private:
 
 public:
     Char(char v) : SysType("char"), value(v) {}
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~Char() {}
 };
 
@@ -508,9 +704,10 @@ private:
 public:
     String(std::string *v) : SysType("string"), value(*v)
     {
-        value = value.substr(1, value.length() - 2);
+        // value = value.substr(1, value.length() - 2);
         std::cout << value << std::endl;
     }
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~String() {}
 };
 
@@ -524,6 +721,7 @@ private:
 
 public:
     VarDecl(TypeSpec *typespec, Identifier *iden, Integer *inte = nullptr, bool isarray = false);
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~VarDecl() {}
 };
 
@@ -536,6 +734,7 @@ private:
 
 public:
     FuncDecl(Identifier *iden, Params *inparams, Params *outparams, ComStmt *comstmt);
+    virtual llvm::Value* Generate(CodeGenerator & codeGen) override;
     ~FuncDecl() {}
 };
 

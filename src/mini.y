@@ -1,5 +1,6 @@
 %{
 #include "ast.h"
+#include "CodeGenerator.h"
 #include <string>
 #include <stdio.h>
 #include <iostream>
@@ -45,12 +46,14 @@ Program* root = nullptr;
     RetStmt *retstmt;
     Statement *statement;
     SimpleExpr *simpleexpr;
+    LogicExpr *logicexpr;
     LocalDecls *localdecls;
     Stmts *stmts;
     AddiExpr *addiexpr;
     RelOp *relop;
     AddOp *addop;
     MulOp *mulop;
+    LogOp *logop;
     Term *term;
     Factor *factor;
     Call *call;
@@ -101,6 +104,7 @@ Program* root = nullptr;
 %type<retstmt>                          return_stmt
 %type<exprstmt>                         expr 
 %type<varlist>                          var_list
+%type<logicexpr>                        logic_expr
 %type<simpleexpr>                       simple_expr
 %type<variable>                         var
 %type<addiexpr>                         additive_expr
@@ -112,6 +116,7 @@ Program* root = nullptr;
 %type<relop>                            relop
 %type<addop>                            addop
 %type<mulop>                            mulop
+%type<logop>                            logop
 %type<call>                             call
 
 %nonassoc LOWER_THAN_ELSE
@@ -216,15 +221,15 @@ expr_stmt:
                                             printf("expr_stmt -> SEMI\n"); }
                                         ;
 selection_stmt:
-    IF LP simple_expr RP stmt  %prec LOWER_THAN_ELSE { 
+    IF LP logic_expr RP stmt  %prec LOWER_THAN_ELSE { 
                                             $$ = new SelectStmt($3, $5);
                                             printf("selection_stmt -> if (expr) stmt\n"); }
-    | IF LP simple_expr RP stmt ELSE stmt      { 
+    | IF LP logic_expr RP stmt ELSE stmt      { 
                                             $$ = new SelectStmt($3, $5, $7, true);
                                             printf("if (expr) stmt else stmt\n"); }
                                         ;
 iteration_stmt:
-    WHILE LP simple_expr RP stmt        {   $$ = new IterStmt($3, $5);
+    WHILE LP logic_expr RP stmt        {   $$ = new IterStmt($3, $5);
                                             printf("while (expr) stmt\n"); }
                                         ;
 return_stmt:
@@ -265,7 +270,25 @@ var:
                                             printf("var -> IDENTIFIER\n");}
     | IDENTIFIER LB simple_expr RB      {   $$ = new Variable(new Identifier($1), $3, true);
                                             printf("var -> IDENTIFIER LB simple_expr RB\n"); }
+    | IDENTIFIER LB RB                  {   $$ = new Variable(new Identifier($1), nullptr, true);
+                                            printf("var -> IDENTIFIER LB RB\n"); }
                                         ;
+
+logic_expr:
+    logic_expr logop simple_expr        {   $$ = new LogicExpr($3, $2, $1, true);
+
+                                        }
+    | simple_expr                       {   $$ = new LogicExpr($1);
+
+                                        }
+    ;
+
+logop:
+    AND                                 {   $$ = new LogOp(LOG_AND);
+
+                                        }
+    ;
+
 simple_expr:
     additive_expr relop additive_expr   {   $$ = new SimpleExpr($1, $2, $3, true);
                                             printf("simple_expr -> additive_expr relop additive_expr\n"); }
@@ -286,6 +309,7 @@ relop:
     | UNEQUAL                           {   $$ = new RelOp(REL_UNE);
                                             printf("relop -> UNEQUAL\n"); }
                                         ;
+
 additive_expr:
     additive_expr addop term            {   $$ = new AddiExpr($3, $2, $1, true);
                                             printf("additive_expr -> additive_expr addop term\n"); }
@@ -373,6 +397,12 @@ int main(int argc, char** argv) {
         std::ofstream os("ast.json");
         os << root->Visualize() << std::endl;
     }
+
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetAsmParser();
+    CodeGenerator generator;
+    generator.generateCode(*root);
 
     return 0;
 }
