@@ -4,3 +4,4 @@
 parser.cpp parser.hpp tokenizer.cpp
 parser.output
 mini
+*.out
