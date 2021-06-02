@@ -558,7 +558,11 @@ llvm::Value* FuncDecl::Generate(CodeGenerator &codeGen){
     Type* type;
     if(this->outParams->getVoid()){
         type = codeGen.getLLVMType(CG_VOID);    
-    }else{
+    }else if(this->identifier->getID()=="main"){
+        //todo:error
+        type = retType.at(0);
+    }
+    else{
         auto structType = StructType::create(codeGen.llvmContext, "retType");
         structType->setBody(retType);
         type = structType;
