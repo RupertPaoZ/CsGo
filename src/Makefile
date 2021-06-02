@@ -5,9 +5,11 @@ LLVM_CONFIG = /usr/lib/llvm-10/bin/llvm-config
 NO_WARNING =  -Wno-return-type \
 	-Wno-switch \
 
-CXXFLAGS =  -std=c++14 $(NO_WARNING)
+CXXFLAGS =  `$(LLVM_CONFIG) --cppflags` -std=c++14 $(NO_WARNING)
+LDFLAGS = `$(LLVM_CONFIG) --ldflags`
+LIBS = `$(LLVM_CONFIG) --libs --system-libs`
 
-OBJS = parser.o tokenizer.o ast.o
+OBJS = parser.o tokenizer.o ast.o CodeGenerator.o
 
 all : $(NAME)
 
@@ -19,11 +21,11 @@ parser.hpp: parser.cpp
 tokenizer.cpp: ${NAME}.l
 	flex -o tokenizer.cpp ${NAME}.l
 
-%.o: %.cpp ast.h
+%.o: %.cpp ast.h CodeGenerator.h
 	g++ -c $(CXXFLAGS) -g -o $@ $< 
 
 $(NAME): $(OBJS)
-	g++ -o $@ $(OBJS)
+	g++ -o $@ $(OBJS) $(LIBS) $(LDFLAGS)
 
 .PHONY: clean
 clean:
