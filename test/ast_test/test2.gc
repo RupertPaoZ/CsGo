@@ -1,5 +1,0 @@
-func main(a int)(ret1 int, ret2 float, ret3 string, ret4 char)
-{
-    s = "a string";
-    return 2, 1.0, "str ing", 'c'; 
-}

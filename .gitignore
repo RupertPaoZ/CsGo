@@ -6,3 +6,4 @@ parser.output
 mini
 *.out
 *.gcpp
+output
