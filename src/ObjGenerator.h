@@ -1,5 +1,5 @@
-#ifndef TINYCOMPILER_OBJGEN_H
-#define TINYCOMPILER_OBJGEN_H
+#ifndef __OBJGENERATOR_H__
+#define __OBJGENERATOR_H__
 
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
@@ -16,9 +16,7 @@
 
 #include "CodeGenerator.h"
 
-using std::string;
-
-void ObjGen(CodeGenerator & codeGen, const string& filename = "output.o")
+void ObjGen(CodeGenerator & codeGen, const std::string& filename = "output.o")
 {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
@@ -56,7 +54,6 @@ void ObjGen(CodeGenerator & codeGen, const string& filename = "output.o")
 
     llvm::legacy::PassManager pass;
     auto fileType = llvm::CGFT_ObjectFile;
-    // auto filetype = llvm::TargetMachine::CGFT_ObjectFile;
 
     if( theTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType) ){
         llvm::errs() << "theTargetMachine can't emit a file of this type";
