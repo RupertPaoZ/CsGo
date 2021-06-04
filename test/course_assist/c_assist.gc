@@ -104,12 +104,14 @@ func calc_gpa(courses[] char, length[] int, cnt int)(void)
     int i;
     int pos1;
     int pos2;
+    int flag;
     float tmp;
     float grade;
     float attempted;
     float gpa;
 
     i = 0;
+    flag = 0;
     attempted = 0.0;
     gpa = 0.0;
 
@@ -118,7 +120,9 @@ func calc_gpa(courses[] char, length[] int, cnt int)(void)
         pos2 = i * 4 + 3;
         pos1 = length[pos1];
         pos2 = length[pos2];
+
         if (pos2 - pos1 != 1) {
+            flag = 1;
             grade = get_grade(courses[], pos1, pos2);
             pos1 = i * 4 + 0;
             pos2 = i * 4 + 1;
@@ -131,8 +135,9 @@ func calc_gpa(courses[] char, length[] int, cnt int)(void)
         i = i + 1;
     }
 
-    gpa = gpa / attempted;
-    printf("GPA: %f\n", gpa);
+    if (flag == 0) { gpa = 0.0; }
+    else { gpa = gpa / attempted; }
+    printf("GPA: %.1f\n", gpa);
     return;
 }
 
@@ -240,25 +245,32 @@ func check_courses(input[] char, completed_courses[] char, completed_num int)(re
     flag = 0;
     res = 0;
 
-    if (input[0] == '\n') {
+    if (input[0] == '\0') {
         res = 0;
     }
     else {
-        while(i < completed_num) {
+        while(i < completed_num && res == 0) {
             j = 0;
             flag = 0;
-            while (completed_courses[pos] != '\n') {
+            while (completed_courses[pos] != '\0' && flag != 1) {
+                
                 if (input[j] != completed_courses[pos]) {
                     flag = 1;
                 }
+                
                 j = j + 1;
                 pos = pos + 1;
             }
-            pos = pos + 1;
-            if (flag == 0) {
-                i = completed_num;
-                res = 1;
+            if (flag == 1) {
+                while (completed_courses[pos] != '\0') {
+                    pos = pos + 1;
+                }
+                res = 0;
             }
+            else { res = 1; }
+            
+            pos = pos + 1;
+            i = i + 1;
         }
     }
     return res;
@@ -286,7 +298,7 @@ func courses_to_take(courses[] char, length[] int, cnt int)(void)
 
     printf("Possible Courses to Take Next\n");
     while (i < INPUT_LEN) {
-        input[i] = '\n';
+        input[i] = '\0';
         i = i + 1;
     }
     i = 0;
@@ -297,65 +309,70 @@ func courses_to_take(courses[] char, length[] int, cnt int)(void)
         pos2 = length[pos2];
         
         if (pos2 - pos1 != 1 && courses[pos1+1] != 'F') {
-            printf("pos1 = %d, pos2 = %d, courses[pos1+1] = %c\n", pos1, pos2, courses[pos1+1]);
+            
             pos1 = i * 4;
             pos2 = i * 4 - 1;
             pos1 = length[pos1];
             if (pos2 < 0) { k = 0; }
-            else { k = pos2; }
+            else { k = length[pos2]; }
             while (k < pos1) {
                 completed_courses[j] = courses[k];
+                
                 j = j + 1;
                 k = k + 1;
             }
             completed_length[i] = j;
-            completed_courses[j] = '\n';
+            completed_courses[j] = '\0';
             j = j + 1;
-            pos2 = i * 4 + 3;
-            pos2 = length[pos2];
             completed_num = completed_num + 1;
         }
         i = i + 1;
     }
 
-    printf("completed_num = %d\n", completed_num);
-    printf("completed_courses: \n%s", completed_courses[]);
-
     i = 0;
     while (i < cnt) {
         k = 0;
         res = 0;
-        pos1 = i * 4 + 1;
-        pos2 = i * 4 + 2;
+
+        pos1 = i * 4 + 2;
+        pos2 = i * 4 + 3;
         pos1 = length[pos1];
         pos2 = length[pos2];
-        j = pos1 + 1;
-        if (pos2 - pos1 == 1) res = 1;
-
-    
-
-        while (pos2 - pos1 != 1 && j <= pos2 && res == 0) {
-            if (courses[j] == AND) {
-                can_take = check_courses(input[], completed_courses[], completed_num);
-            }
-            else if (courses[j] == OR) {
-                if (can_take == 1) {
-                    res = 1;
+        if (pos2 - pos1 != 1) res = 0;
+        else {
+            pos1 = i * 4 + 1;
+            pos2 = i * 4 + 2;
+            pos1 = length[pos1];
+            pos2 = length[pos2];
+            j = pos1 + 1;
+            if (pos2 - pos1 == 1) res = 1;
+            while (pos2 - pos1 != 1 && j <= pos2 && res == 0) {
+                if (courses[j] == AND) {
+                    input[k] = '\0';
+                    can_take = check_courses(input[], completed_courses[], completed_num);
+                    k = 0;
                 }
-            }
-            else if (j == pos2) {
-                input[k] = '\n';
-                can_take = check_courses(input[], completed_courses[], completed_num);
-                printf("can_take = %d\n", can_take);
-                if (can_take == 1) {
-                    res = 1;
+                else if (courses[j] == OR) {
+                    input[k] = '\0';
+                    can_take = check_courses(input[], completed_courses[], completed_num);
+                    if (can_take == 1) {
+                        res = 1;
+                    }
+                    k = 0;
                 }
+                else if (j == pos2) {
+                    input[k] = '\0';
+                    can_take = check_courses(input[], completed_courses[], completed_num);
+                    if (can_take == 1) {
+                        res = 1;
+                    }
+                }
+                else {
+                    input[k] = courses[j];
+                    k = k + 1;
+                }
+                j = j + 1;
             }
-            else {
-                input[k] = courses[j];
-                k = k + 1;
-            }
-            j = j + 1;
         }
         
         if (res == 1) {
@@ -382,61 +399,55 @@ func courses_to_take(courses[] char, length[] int, cnt int)(void)
 func main(void)(ret int)
 {
     char courses[COURSE_SIZE];
-    char input[INPUT_LEN];
     int length[LENGTH];
     int cnt;
-    int c_p;
+    int i;
     int l_p;
-    int p;
     int completed;
+    int remaining;
+    int flag;
+    char c;
 
-    int t1;
-    int t2;
-    int t3;
-    int t4;
-
-    cnt = 0;
-    p = 0;
-    c_p = 0;
+    i = 0;
     l_p = 0;
-
-    t1 = 0;
-    t2 = 0;
-    t3 = 0;
-    t4 = 0;
-
-    while(cnt < 200) {
-        input[cnt] = '\n';
-        cnt = cnt + 1;
-    }
     cnt = 0;
-    while(scanf("%s",input[])+1 != 0){
-        c_p = 0;
-        while(input[c_p] != '\n'){
-            if (input[c_p] == '|') {
-                length[l_p] = p;
+    flag = 2;
+
+    cnt = 0;
+    while(flag != 0){
+        scanf("%c", c);
+        if (c == '\n') {
+            if (flag == 1) {
+                courses[i] = '\0';
+            }
+            flag = flag - 1;
+            length[l_p] = i;
+            l_p = l_p + 1;
+            cnt = cnt + 1;
+        }
+        else {
+            flag = 2;
+            courses[i] = c;
+            if (c == '|') {
+                length[l_p] = i;
                 l_p = l_p + 1;
             }
-            courses[p] = input[c_p];
-            p = p + 1;
-            c_p = c_p + 1;
+            i = i + 1;
         }
-        p = p - 1;
-        t1 = cnt * 4;
-        t2 = cnt * 4 + 1;
-        t3 = cnt * 4 + 2;
-        t4 = cnt * 4 + 3;
-        length[l_p] = p;
-        l_p = l_p + 1;
-        cnt = cnt + 1;
     }
+    cnt = cnt - 1;
 
     calc_gpa(courses[], length[], cnt);
     hours_attempted(courses[], length[], cnt);
     completed = hours_completed(courses[], length[], cnt);
-    credits_remaining(courses[], length[], cnt, completed);
+    remaining = credits_remaining(courses[], length[], cnt, completed);
     printf("\n");
-    courses_to_take(courses[], length[], cnt);
+    if (remaining == 0) { 
+        printf("Possible Courses to Take Next\n  None - Congratulations!\n"); 
+    }
+    else {
+        courses_to_take(courses[], length[], cnt);
+    }
 
     return 0;
 }
