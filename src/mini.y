@@ -478,9 +478,13 @@ int main(int argc, char** argv) {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
+    std::string filename = std::string(argv[1]);
+    filename = filename.substr(0, filename.length()-3);
+    std::string ll_filename = filename+".ll";
+    std::string o_filename = filename+".o";
     CodeGenerator generator;
-    generator.generateCode(*root);
-    ObjGen(generator);
+    generator.generateCode(*root, ll_filename);
+    ObjGen(generator, o_filename);
 
     return 0;
 }
