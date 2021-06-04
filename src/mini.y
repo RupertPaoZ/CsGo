@@ -348,6 +348,10 @@ factor:
                                             printf("factor -> FLOAT\n"); }
     | INTEGER                           {   $$ = new Factor(new Integer($1));
                                             printf("factor -> INTEGER\n"); }
+    | MINUS FLOAT                       {   $$ = new Factor(new Float(-$2));
+                                            printf("factor -> FLOAT\n"); }
+    | MINUS INTEGER                     {   $$ = new Factor(new Integer(-$2));
+                                            printf("factor -> INTEGER\n"); }
     | CHAR                              {   $$ = new Factor(new Char($1));
                                             // printf("%c\n", $1);
                                             printf("factor -> CHAR\n"); }
