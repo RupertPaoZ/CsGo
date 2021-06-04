@@ -15,15 +15,15 @@ void CodeGenerator::generateCode(Program & root){
     pushBlock(block);
     
     root.Generate(*this);
-    cout<<"begin"<<endl;
+    //cout<<"begin"<<endl;
     popBlock();
 
-    cout << "Code generate success" << endl;
+    //cout << "Code generate success" << endl;
 
-    // llvm::legacy::PassManager passManager;
-    // passManager.add(createPrintModulePass(outs()));
-    // passManager.run(*(this->theModule.get()));
-    this->theModule->print(llvm::outs(), nullptr);
+    llvm::legacy::PassManager passManager;
+    passManager.add(createPrintModulePass(outs()));
+    passManager.run(*(this->theModule.get()));
+    // this->theModule->print(llvm::outs(), nullptr);
     // this->theModule->dump();
     return;
 }
@@ -49,7 +49,7 @@ llvm::Value* MulOp::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* Program::Generate(CodeGenerator &codeGen){
-    cout<<"Program!"<<endl;
+    //cout<<"Program!"<<endl;
     DeclList decl = *(this->getDeclList());
     for(auto& thisDecl : decl){
         thisDecl->Generate(codeGen);
@@ -70,14 +70,14 @@ llvm::Value* Identifier::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* Param::Generate(CodeGenerator &codeGen){
-    cout<<"param generate!"<<endl;
+    //cout<<"param generate!"<<endl;
     BuildInType inType = this->typeSpec->getType();
     
     //todo: array type
     Value* inst = nullptr;
     if(this->isArray){
         llvm::Type* type = codeGen.getLLVMPtrType(inType);
-        cout<<"param : array type"<<endl;
+        //cout<<"param : array type"<<endl;
         inst = codeGen.builder.CreateAlloca(type);
         cout<<"alloc success"<<endl;
         codeGen.setSymType(this->identifier->getID(), type);
@@ -105,7 +105,7 @@ llvm::Value* Statement::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* Factor::Generate(CodeGenerator &codeGen){
-    cout<<"factor "<<this->factorType<<endl;
+    //cout<<"factor "<<this->factorType<<endl;
     switch(this->factorType){
         case FT_SIMPLEEXPR: return this->simpleExpr->Generate(codeGen);
         case FT_VAR: if(this->variable->isPointer()) return this->variable->Generate(codeGen);  //todo error
@@ -131,7 +131,8 @@ llvm::Value* Term::Generate(CodeGenerator &codeGen){
     }
     switch(this->mulOp->getOpType()){
         case MT_MUL: return isFloat ? codeGen.builder.CreateFMul(left, right, "multmpf") : codeGen.builder.CreateMul(left, right, "multmpi");
-        case MT_DIV: return codeGen.builder.CreateSDiv(left, right, "tmpDiv");
+        case MT_DIV: return isFloat ? codeGen.builder.CreateFDiv(left, right, "divmpf") : codeGen.builder.CreateSDiv(left, right, "divmpi");
+        //case MT_DIV: return codeGen.builder.CreateSDiv(left, right, "tmpDiv");
         case MT_MOD: return nullptr; //todo: mod
     }
     //todo:error
@@ -168,11 +169,11 @@ llvm::Value* Call::Generate(CodeGenerator &codeGen){
             if(isScanf && !isString){
                 //todo:error
                 if(var==nullptr) cout<<"null!"<<endl;
-                cout<<"scanf gen"<<endl;
+                //cout<<"scanf gen"<<endl;
                 value = var->Generate(codeGen);
-                cout<<"null1"<<endl;
+                //cout<<"null1"<<endl;
             }
-            else { value = thisArg->Generate(codeGen); cout<<"not scanf gen!"<<endl;}
+            else { value = thisArg->Generate(codeGen); /*cout<<"not scanf gen!"<<endl;*/}
             argsv.push_back(value);
             // if(value->getType()->isPointerTy()) cout<<"pointer!"<<endl;
             if( !argsv.back() ){        // if any argument codegen fail
@@ -180,13 +181,13 @@ llvm::Value* Call::Generate(CodeGenerator &codeGen){
             }
         }
     }
-    cout << "call gen end"<<endl;
+    //cout << "call gen end"<<endl;
     llvm::Value *res = codeGen.builder.CreateCall(function, argsv);
     return res;
 }
 
 llvm::Value* Variable::Generate(CodeGenerator &codeGen){
-    cout<<"variable gen!"<<endl;
+    //cout<<"variable gen!"<<endl;
     if(this->isArray){
         vector<Value*> indices;
         indices.push_back(ConstantInt::get(codeGen.getLLVMType(CG_INTEGER), 0, false));
@@ -311,9 +312,9 @@ llvm::Value* Stmts::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* ComStmt::Generate(CodeGenerator &codeGen){
-    cout<<"stmt ge"<<endl;
+    //cout<<"stmt ge"<<endl;
     this->localDecls->Generate(codeGen);
-    cout<<"stmt ge"<<endl;
+    //cout<<"stmt ge"<<endl;
     this->stmts->Generate(codeGen);
     return nullptr;
 }
@@ -327,13 +328,13 @@ llvm::Value* Exprs::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* ExprStmt::Generate(CodeGenerator &codeGen){
-    cout<<"expr stmt!"<<endl;
+    //cout<<"expr stmt!"<<endl;
     VarList var = *(this->vars->getVarlist());
     ExprList expr = *(this->exprs->getExprlist());
     //todo: error(different terms)
     auto thisVar = var.begin();
     auto thisExpr = expr.begin();
-    cout<<"1"<<endl;
+    //cout<<"1"<<endl;
     for(;thisVar!=var.end(), thisExpr!=expr.end();thisExpr++){
         // string name = (*thisVar)->getID();
         // cout<<name<<endl;
@@ -341,8 +342,8 @@ llvm::Value* ExprStmt::Generate(CodeGenerator &codeGen){
         // codeGen.builder.CreateStore((*thisExpr)->Generate(codeGen), codeGen.getSymValue(name));
         auto right = (*thisExpr)->Generate(codeGen);
         string funcname = (*thisExpr)->getCallName();
-        if(funcname!=""){
-            cout<<"struct!"<<endl;
+        if(funcname!="" && funcname != "printf" && funcname != "scanf"){
+            //cout<<"struct!"<<endl;
             int num = codeGen.getReturnType(funcname)->getStructNumElements();
             for(int i=0;i<num;i++){
                 string name = (*thisVar)->getID();
@@ -353,13 +354,13 @@ llvm::Value* ExprStmt::Generate(CodeGenerator &codeGen){
             }
         }else{
             string name = (*thisVar)->getID();
-            cout<<name<<endl;
+            //cout<<name<<endl;
             if(name=="") continue;
             codeGen.builder.CreateStore(right, (*thisVar)->Generate(codeGen));
             thisVar++;
         }
     }
-    cout<<"out expr stmt!"<<endl;
+    //cout<<"out expr stmt!"<<endl;
     return nullptr;
 }
 
@@ -369,7 +370,7 @@ llvm::Value* FuncStmt::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* SelectStmt::Generate(CodeGenerator &codeGen){
-    cout << "Generating if statement" << endl;
+    //cout << "Generating if statement" << endl;
     Value* condValue = this->logicExpr->Generate(codeGen);
     if( !condValue )
         return nullptr;
@@ -466,7 +467,7 @@ llvm::Value* IterStmt::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* RetStmt::Generate(CodeGenerator &codeGen){
-    cout<<"ret stmt!"<<endl;
+    //cout<<"ret stmt!"<<endl;
     Function* function = codeGen.builder.GetInsertBlock()->getParent();
     Type* retType = function->getReturnType();
     if(retType->isVoidTy()) return codeGen.builder.CreateRetVoid();
@@ -533,7 +534,7 @@ llvm::Value* VarDecl::Generate(CodeGenerator &codeGen){
 }
 
 llvm::Value* FuncDecl::Generate(CodeGenerator &codeGen){
-    cout<<"FuncDecl!"<<endl;
+    //cout<<"FuncDecl!"<<endl;
     vector<Type*> argType, retType;
     
     if(!this->inParams->getVoid()){
@@ -567,9 +568,9 @@ llvm::Value* FuncDecl::Generate(CodeGenerator &codeGen){
         structType->setBody(retType);
         type = structType;
     }
-    cout<<2<<endl;
+    //cout<<2<<endl;
     functionType = FunctionType::get(type, argType, false);
-    cout<<3<<endl;
+    //cout<<3<<endl;
     function = Function::Create(functionType, GlobalValue::ExternalLinkage, this->identifier->getID(), codeGen.theModule.get());
     BasicBlock* basicBlock = BasicBlock::Create(codeGen.llvmContext, "entry", function, nullptr);
     

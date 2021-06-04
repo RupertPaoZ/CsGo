@@ -60,20 +60,21 @@ private:
             {
                 perror("Wrong MACRO ARGS!");
             }
+            std::vector<std::string> outputs(defs);
             for (int i = 0; i < this->srcArgs.size(); i++)
             {
-                for (auto &def : defs)
+                for (auto &output : outputs)
                 {
-                    if (this->srcArgs[i] == def)
+                    if (this->srcArgs[i] == output)
                     {
-                        def = args[i];
+                        output = args[i];
                     }
                 }
             }
             cache.clear();
-            for (auto def : defs)
+            for (auto output : outputs)
             {
-                cache += def;
+                cache += output;
             }
             return head + " " + cache + " " + tail;
         }
