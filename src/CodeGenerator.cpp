@@ -217,6 +217,9 @@ llvm::Value* Variable::Generate(CodeGenerator &codeGen){
             }else if(elementType->isDoubleTy()){
                 length = 8;
                 ptrtype = CG_FLOAT;
+            }else if(elementType->isPointerTy()){
+                length = 8;
+                ptrtype = CG_STRING;
             }
             Value* begin = codeGen.builder.CreatePtrToInt(inst, codeGen.getLLVMType(CG_LONG));
             Value* offset = codeGen.builder.CreateZExt(index, codeGen.getLLVMType(CG_LONG));
@@ -264,6 +267,35 @@ llvm::Value* AddiExpr::Generate(CodeGenerator &codeGen){
     bool isFloat = left->getType()->isDoubleTy() || right->getType()->isDoubleTy();
     if(!left || !right){
         return nullptr;
+    }
+    if(left->getType()->isPointerTy())
+    {
+        auto elementType = left->getType()->getPointerElementType();
+        int length;
+        BuildInType ptrtype;
+        if(elementType->isIntegerTy(32)){
+            length = 4;
+            ptrtype = CG_INTEGER;
+        }else if(elementType->isIntegerTy(8)){
+            length = 1;
+            ptrtype = CG_CHAR;
+        }else if(elementType->isDoubleTy()){
+            length = 8;
+            ptrtype = CG_FLOAT;
+        }else if(elementType->isPointerTy()){
+            length = 8;
+            ptrtype = CG_STRING;
+        }
+        Value* begin = codeGen.builder.CreatePtrToInt(left, codeGen.getLLVMType(CG_LONG));
+        Value* offset = codeGen.builder.CreateZExt(right, codeGen.getLLVMType(CG_LONG));
+        Value* realoffset = codeGen.builder.CreateMul(offset, codeGen.builder.getInt64(length));
+        Value* add;
+        if(this->addOp->getOpType()) {
+            add = codeGen.builder.CreateAdd(begin, realoffset);
+        }else{
+            add = codeGen.builder.CreateSub(begin, realoffset);
+        }
+        return codeGen.builder.CreateIntToPtr(add, codeGen.getLLVMPtrType(ptrtype));
     }
     if(this->addOp->getOpType()){
         return isFloat ? codeGen.builder.CreateFAdd(left, right, "addtmpf") : codeGen.builder.CreateAdd(left, right, "addtmpi");
@@ -585,16 +617,18 @@ llvm::Value* FuncDecl::Generate(CodeGenerator &codeGen){
         for(;thisParam!=inParamList.end();thisParam++, thisValue++){
             thisValue->setName((*thisParam)->getName());
             Value* alloc = (*thisParam)->Generate(codeGen);
+            cout << "yes1"<<endl;
             codeGen.builder.CreateStore(thisValue, alloc, false);
             if((*thisParam)->getIsArray()){
                 codeGen.setSymValue((*thisParam)->getName(), codeGen.builder.CreateLoad(alloc));
             }
             else codeGen.setSymValue((*thisParam)->getName(), alloc);
+            cout<<"yes2"<<endl;
         }
     }
-
+    cout << "yes"<<endl;
     this->comStmt->Generate(codeGen);
-
+    cout << "yes" << endl;
     codeGen.popBlock();
     return function;
 }
