@@ -3,6 +3,7 @@
 std::string preProcess(std::string filename)
 {
     std::ifstream fin(filename);
+    // intermediate filename
     std::ofstream fout(filename + "pp");
     std::string fileContent;
     std::vector<macroTable> Macros;
@@ -15,7 +16,7 @@ std::string preProcess(std::string filename)
         ss >> tmp;
         if (tmp.size() != 0)
         {
-            if (tmp == "#define")
+            if (tmp == "#define") //find macros
             {
                 std::vector<std::string> lineTokens;
                 while (ss >> tmp)
@@ -25,6 +26,7 @@ std::string preProcess(std::string filename)
                 std::string firstPart, secondPart;
                 if (lineTokens[0].find('(') != lineTokens[0].npos)
                 {
+                    //if it is with args, it's name must end with a ')'
                     for (int i = 0;; i++)
                     {
                         firstPart += lineTokens[i] + " ";
@@ -41,10 +43,12 @@ std::string preProcess(std::string filename)
                 {
                     secondPart += lineTokens[i];
                 }
+                // store the marco in macrotable
                 Macros.push_back(macroTable(firstPart, secondPart));
             }
             else
             {
+                // if this line is not a macro define, try to find macros in it and replace it.
                 for (auto macro : Macros)
                 {
                     while (macro.match(fileContent))

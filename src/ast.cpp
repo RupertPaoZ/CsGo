@@ -1,12 +1,5 @@
 #include "ast.h"
 
-/*
-case FT_CHAR:
-    return Format<Char>(this->nchar);
-case FT_STRING:
-    return Format<String>(this->nstring);
-*/
-
 std::string Node::Format()
 {
     return "{ \"name\" : \"" + this->name + "\" }";
@@ -49,22 +42,8 @@ LogOp::LogOp(LogType logtype) : Node("LogOp"), logType(logtype)
     case LOG_AND:
         this->setName("AND");
         break;
-    // case REL_LT:
-    //     this->setName("LT");
-    //     break;
-    // case REL_GE:
-    //     this->setName("GE");
-    //     break;
-    // case REL_GT:
-    //     this->setName("GT");
-    //     break;
-    // case REL_EQ:
-    //     this->setName("EQUAL");
-    //     break;
-    // case REL_UNE:
-    //     this->setName("UNEQUAL");
-    //     break;
     default:
+        this->setName("OR");
         break;
     }
 }
@@ -257,11 +236,11 @@ Call::Call(Identifier *iden, Args *args) : NodeWithChildren("Call"), identifier(
 Variable::Variable(Identifier *iden, SimpleExpr *simpleexpr, bool isarray) : NodeWithChildren("Variable"), identifier(iden), simpleExpr(simpleexpr), isArray(isarray)
 {
     this->children->push_back(dynamic_cast<Node *>(identifier));
-    if (this->isArray && this->simpleExpr!=nullptr)
+    if (this->isArray && this->simpleExpr != nullptr)
         this->children->push_back(dynamic_cast<Node *>(simpleExpr));
 }
 
-LogicExpr::LogicExpr(SimpleExpr *simpleexpr , LogOp *logop,  LogicExpr *logicexpr, bool islogicexpr) : NodeWithChildren("LogicExpr"), simpleExpr(simpleexpr), logOp(logop), logicExpr(logicexpr), isLogicExpr(islogicexpr)
+LogicExpr::LogicExpr(SimpleExpr *simpleexpr, LogOp *logop, LogicExpr *logicexpr, bool islogicexpr) : NodeWithChildren("LogicExpr"), simpleExpr(simpleexpr), logOp(logop), logicExpr(logicexpr), isLogicExpr(islogicexpr)
 {
     this->children->push_back(dynamic_cast<Node *>(this->simpleExpr));
     if (this->isLogicExpr)
