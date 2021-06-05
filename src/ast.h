@@ -736,11 +736,7 @@ private:
     std::string value;
 
 public:
-    String(std::string *v) : SysType("string"), value(*v)
-    {
-        // value = value.substr(1, value.length() - 2);
-        std::cout << value << std::endl;
-    }
+    String(std::string *v) : SysType("string"), value(*v) {}
     virtual llvm::Value *Generate(CodeGenerator &codeGen) override;
     ~String() {}
 };

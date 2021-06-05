@@ -36,3 +36,8 @@ clean:
 	-rm -f *.ll
 	-rm -f *.out
 	-rm -f *.gcpp
+	-rm -f ../test/*/*.ll
+	-rm -f ../test/*/*.o
+	-rm -f ../test/*/*.gcpp
+	-rm -f ../test/*/*.out
+	
