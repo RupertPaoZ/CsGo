@@ -5,6 +5,7 @@
 #include <sstream>
 #include "ast.h"
 #include "parser.hpp"
+
 extern "C" int yywrap() {return 1;}
 int clean_string () {
     char* mystr;
@@ -28,11 +29,9 @@ int clean_string () {
 }
 
 int clean_char () {
-    printf("yytext is %s\n", yytext);
     char* mystr;
     mystr = strdup(yytext) ; // copy yytext
     if (!mystr) return 1;
-    // mystr[yyleng-2] = '\0';    // remove trailing "
     for (int i = 0, j = 0; i <= strlen(mystr); i++, j++) { // "<=" and not "<" to get /0, i : mystr indice and j : yytext indice
         if (mystr[i] == '\\') {
             i++;
@@ -46,7 +45,6 @@ int clean_char () {
     }
     yyleng=3;
     free(mystr);
-    printf("yytext is %s\n", yytext);
     return 0 ;
 }
 
@@ -117,7 +115,6 @@ int clean_char () {
                                         }
                                         if (strcmp(yytext, "\'\\0\'") == 0) {
                                             ctmp = '\0';
-                                            printf("ctmp = 0!!!!!!!\n");
                                         }
                                         else {
                                             sscanf(yytext, "\'%c\'", &ctmp);
