@@ -49,11 +49,17 @@ std::string preProcess(std::string filename)
             else
             {
                 // if this line is not a macro define, try to find macros in it and replace it.
-                for (auto macro : Macros)
+                bool found = true;
+                while (found)
                 {
-                    while (macro.match(fileContent))
+                    found = false;
+                    for (auto macro : Macros)
                     {
-                        fileContent = macro.replace(fileContent);
+                        while (macro.match(fileContent))
+                        {
+                            fileContent = macro.replace(fileContent);
+                            found = true;
+                        }
                     }
                 }
                 fout << fileContent << std::endl;

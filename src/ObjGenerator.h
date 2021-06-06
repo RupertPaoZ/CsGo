@@ -16,7 +16,7 @@
 
 #include "CodeGenerator.h"
 
-void ObjGen(CodeGenerator & codeGen, const std::string& filename = "output.o")
+void ObjGen(CodeGenerator &codeGen, const std::string &filename = "output.o")
 {
     llvm::InitializeAllTargetInfos();
     llvm::InitializeAllTargets();
@@ -30,7 +30,8 @@ void ObjGen(CodeGenerator & codeGen, const std::string& filename = "output.o")
     std::string error;
     auto Target = llvm::TargetRegistry::lookupTarget(targetTriple, error);
 
-    if( !Target ){
+    if (!Target)
+    {
         llvm::errs() << error;
         return;
     }
@@ -47,7 +48,8 @@ void ObjGen(CodeGenerator & codeGen, const std::string& filename = "output.o")
     std::error_code EC;
     llvm::raw_fd_ostream dest(filename.c_str(), EC, llvm::sys::fs::OF_None);
 
-    if(EC) {
+    if (EC)
+    {
         llvm::errs() << "Could not open file: " << EC.message();
         return;
     }
@@ -55,7 +57,8 @@ void ObjGen(CodeGenerator & codeGen, const std::string& filename = "output.o")
     llvm::legacy::PassManager pass;
     auto fileType = llvm::CGFT_ObjectFile;
 
-    if( theTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType) ){
+    if (theTargetMachine->addPassesToEmitFile(pass, dest, nullptr, fileType))
+    {
         llvm::errs() << "theTargetMachine can't emit a file of this type";
         return;
     }
