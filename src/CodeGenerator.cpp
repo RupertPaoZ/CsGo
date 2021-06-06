@@ -375,32 +375,33 @@ Value* ExprStmt::Generate(CodeGenerator &codeGen){
     VarList var = *(this->vars->getVarlist());
     ExprList expr = *(this->exprs->getExprlist());
     //todo: error(different terms)
-    auto thisVar = var.begin();
-    auto thisExpr = expr.begin();
+    std::vector<Value*> tmp;
     // Traverse
-    for(;thisVar!=var.end(), thisExpr!=expr.end();thisExpr++){
-        // User-defined function call returns a structtype
-        // We need to get the struct member value
-        auto right = (*thisExpr)->Generate(codeGen);
-        std::string funcname = (*thisExpr)->getCallName();
+    for(auto &thisExpr : expr){
+        auto right = thisExpr->Generate(codeGen);
+        std::string funcname = thisExpr->getCallName();
         if(funcname!="" && funcname != "printf" && funcname != "scanf"){
             // Get number of struct elements and traverse
             int num = codeGen.getReturnType(funcname)->getStructNumElements();
             for(int i=0;i<num;i++){
-                std::string name = (*thisVar)->getID();
-                if(name=="") continue;
                 // Extract value and assign to a variable
                 Value* structValue = codeGen.builder.CreateExtractValue(right, (uint64_t)i);
-                codeGen.builder.CreateStore(structValue, (*thisVar)->Generate(codeGen));
-                thisVar++;
+                tmp.push_back(structValue);
             }
         }else{
-            std::string name = (*thisVar)->getID();
-            if(name=="") continue;
             // Assign directly
-            codeGen.builder.CreateStore(right, (*thisVar)->Generate(codeGen));
-            thisVar++;
+            tmp.push_back(right);
         }
+    }
+    auto thisValue = tmp.begin();
+    for(auto &thisVar : var){
+        std::string name = thisVar->getID();
+        if(name=="") {
+            thisValue++;
+            continue;
+        }
+        codeGen.builder.CreateStore(*thisValue, thisVar->Generate(codeGen));
+        thisValue++;
     }
     return nullptr;
 }
