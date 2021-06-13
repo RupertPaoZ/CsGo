@@ -57,13 +57,23 @@ private:
         {
             // if there is arg(s), we need to find out all args
             std::string head = input.substr(0, pos), cache = input.substr(pos);
-            std::string tail = cache.substr(cache.find(')') + 1), body = cache.substr(this->Name.length() + 1, cache.find(')') - this->Name.length());
+            int rec = 1, delta = this->Name.length();
+            do
+            {
+                delta++;
+                if (cache[delta] == '(')
+                    rec++;
+                else if (cache[delta] == ')')
+                    rec--;
+            } while (rec != 0);
+            std::string tail = cache.substr(delta + 1), body = cache.substr(this->Name.length() + 1, delta - this->Name.length());
             cache.clear();
             std::vector<std::string> args;
+            rec = 1;
             // find all args
             for (int i = 0; i < body.length(); i++)
             {
-                if (body[i] == ',' || body[i] == ' ' || body[i] == ')')
+                if (body[i] == ',' || body[i] == ' ' || (body[i] == ')' && rec == 1))
                 {
                     if (cache.length() != 0)
                     {
@@ -73,6 +83,10 @@ private:
                 }
                 else
                 {
+                    if (body[i] == '(')
+                        rec++;
+                    else if (body[i] == ')')
+                        rec--;
                     cache += body[i];
                 }
             }
