@@ -3,7 +3,6 @@
 <div style="page-break-after: always;"></div>
 
 
-
 [TOC]
 
 <div style="page-break-after: always;"></div>
@@ -20,7 +19,7 @@
 - D3.JS实现AST可视化
 - LLVM+Graphviz实现CFG可视化
 
-![image-20200531023300128](./img/SPLArchitecture.png)
+![image-20200531023300128](./img/SPLArchitecture.jpg)
 
 ### 1.2 开发环境
 
