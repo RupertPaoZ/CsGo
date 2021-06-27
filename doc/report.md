@@ -11,15 +11,14 @@
 
 ### 1.1 概述
 
-本次实验小组基于C++语言设计并实现了一个SPL语言的编译系统，该系统以符合SPL语言规范的代码文本文输入，输出为指定机器的目标代码。该SPL编译器的设计实现涵盖词法分析、语法分析、语义分析、优化考虑、代码生成等阶段和环节，所使用的具体技术包括但不限于：
+本次实验小组基于C++语言设计并实现了一个CsGO语言的编译系统，该系统以符合CsGO语言规范的代码文本文输入，输出为指定机器的目标代码。该CsGO编译器的设计实现涵盖词法分析、语法分析、语义分析、优化考虑、代码生成等阶段和环节，所使用的具体技术包括但不限于：
 
 - Flex实现词法分析
 - Bison实现语法分析
 - LLVM实现代码优化、中间代码生成、目标代码生成
 - D3.JS实现AST可视化
-- LLVM+Graphviz实现CFG可视化
 
-![image-20200531023300128](./img/SPLArchitecture.jpg)
+![image-20200531023300128](./img/Architecture.jpg)
 
 ### 1.2 开发环境
 
@@ -27,8 +26,7 @@
 - 编译环境：
   - Flex 2.6.4
   - Bison 3.5.1 (GNU Bison)
-  - LLVM 9.0.0
-- 编辑器：Visual Studio Code
+  - LLVM 10.0.0
 
 ### 1.3 文件说明
 
@@ -46,7 +44,7 @@
   - ppMacro.h：宏定义相关头文件
   - ppMacro.cpp：宏定义相关实现文件
   - Makefile：定义编译链接规则
-  - gentest.sh：生成目标代码的脚本
+  - gentest.sh：生成目标代码并执行测试的脚本
   - tree.json：基于AST生成的JSON文件
   - tree.html：可视化AST的网页文件
   
@@ -75,7 +73,7 @@
 | 组员   | 具体分工                             |
 | :----- | :----------------------------------- |
 | 刘馨宇 | 词法分析，语法分析                   |
-| 毕邹彬 | AST定义，AST可视化                   |
+| 毕邹彬 | AST定义，AST可视化，宏定义           |
 | 吴韬   | 语义分析，中间代码生成，目标代码生成 |
 
 
@@ -294,7 +292,7 @@ int clean_char () {
 
 ### 3.1 Yacc
 
-SPL编译器的语法分析使用Yacc（Bison）完成。Yacc是Unix/Linux上一个用来生成编译器的编译器（编译器代码生成器）。Yacc生成的编译器主要是用C语言写成的语法解析器（Parser），需要与词法解析器Lex一起使用，再把两部分产生出来的C程序一并编译。
+CsGO编译器的语法分析使用Yacc（Bison）完成。Yacc是Unix/Linux上一个用来生成编译器的编译器（编译器代码生成器）。Yacc生成的编译器主要是用C语言写成的语法解析器（Parser），需要与词法解析器Lex一起使用，再把两部分产生出来的C程序一并编译。
 
 与Lex相似，Yacc的输入文件由以%%分割的三部分组成，分别是声明区、规则区和程序区。三部分的功能与Lex相似，不同的是规则区的正则表达式替换为CFG，在声明区要提前声明好使用到的终结符以及非终结符的类型。
 
@@ -656,7 +654,7 @@ graph LR
   Variable-->UnderScore
 ```
 
-##### Nonterminal
+#### Nonterminal
 
 | Class        | Function                                   |
 | ------------ | ------------------------------------------ |
@@ -689,7 +687,7 @@ graph LR
 | `Variable`   | 代表变量的节点                             |
 | `Args`       | 函数调用时代表所有参数                     |
 
-##### Terminal
+#### Terminal
 
 | Class        | Base class                                                   |
 | ------------ | ------------------------------------------------------------ |
@@ -1119,7 +1117,7 @@ Value* Term::Generate(CodeGenerator &codeGen){
 
 在处理加减运算的时候，需要注意一种特殊情况：指针运算（本语言中只支持指针的加减运算，如`a[] + i`）。此处的特殊处理与“变量取值”一节中的指针处理类似：`a[]`会返回头指针，`i`为整型，需要经过指针转整型、判断元素类型获取size、32位int转64位int、整型加减、整型转指针的流程。具体代码与“变量取值”一节相同，这里不再展示。
 
-#### 3.3.9 赋值语句
+#### 5.3.8 赋值语句
 
 本语言支持多值赋值，中间代码生成只要将对应位置进行赋值即可。需要注意的地方有：
 
@@ -1167,7 +1165,7 @@ Value* ExprStmt::Generate(CodeGenerator &codeGen){
 }
 ```
 
-#### 3.3.10 函数定义
+#### 5.3.9 函数定义
 
 函数定义包括以下流程：
 
@@ -1249,7 +1247,7 @@ Value* ExprStmt::Generate(CodeGenerator &codeGen){
     codeGen.popBlock();
 ```
 
-#### 3.3.11 返回语句
+#### 5.3.10 返回语句
 
 返回语句的逻辑如下：
 
@@ -1295,7 +1293,7 @@ else{
     codeGen.builder.CreateRet(returnValue);
 ```
 
-#### 3.3.12 函数调用
+#### 5.3.11 函数调用
 
 函数调用需要注意的一点是：语言中没有显式支持指针，所以对于scanf函数的处理与一般函数不同：scanf的参数需要传递指针。下面是函数调用的处理逻辑：
 
@@ -1347,7 +1345,7 @@ else{
     Value *res = codeGen.builder.CreateCall(function, argsv);
 ```
 
-#### 3.3.13 if语句
+#### 5.3.12 if语句
 
 if语句被抽象成四个基础块：原有块（计算cond值）、if块（cond为真）、else块（cond为假）、end块（if语句结束后的后续语句块）。此处分为有else和没有else两种情况，两种情况对应的DAG图为：
 
@@ -1421,7 +1419,7 @@ Value* SelectStmt::Generate(CodeGenerator &codeGen){
 }
 ```
 
-#### 3.3.14 while语句
+#### 5.3.13 while语句
 
 while语句被抽象成三个基础块：cond块（计算cond值，需要反复计算）、body块（循环体）、end块（while语句结束后的后续语句块）。对应的DAG图为：
 
@@ -1476,7 +1474,7 @@ Value* IterStmt::Generate(CodeGenerator &codeGen){
 
 ## 第六章 代码生成
 
-### 5.1 选择目标机器
+### 6.1 选择目标机器
 
 LLVM 支持本地交叉编译。我们可以将代码编译为当前计算机的体系结构，也可以像针对其他体系结构一样轻松地进行编译。LLVM 提供了 `sys::getDefaultTargetTriple`，它返回当前计算机的目标三元组：
 
@@ -1559,9 +1557,251 @@ pass.run(*generator.TheModule);
 dest.flush();
 ```
 
-## 第七章 测试案例
+## 第七章 宏
 
-### 6.1 快速排序测试
+### 7.1 宏的实现
+
+为了方便程序的书写，我们引入了宏的使用。我们实现了基本的简单宏和带参数的宏，例如：
+
+```
+#define MAX 100
+#define INC(x) x=x+1
+```
+
+宏替换发生在整个编译程序开始之前，属于预处理的一部分。为了实现带参数的宏，我们定义了类`macroTable`每一个`macroTable`都储存了一个宏定义的名称、参数、和目标字符串。
+
+```c++
+class macroTable
+{
+    friend std::string preProcess(std::string filename);
+private:
+    std::string Name;                 // the name of this macro
+    bool withArgs;                    // whether it is a macro with arg(s)
+    std::vector<std::string> srcArgs; // args of the macro
+    std::vector<std::string> defs;    // splited destination code which is used for replacing
+    /* 
+     * judge whether there is a macro in this sentence 
+     * if exists, return true; 
+     * else false.
+     */
+    bool match(std::string token);
+    /*
+     * replace the macro in input
+     * input :
+     *      std::string input : source code
+     * return :
+     *      std::string : processed code 
+     */
+    std::string replace(std::string input);
+public:
+    /* 
+     * constructor
+     * input :
+     *      std::string firstPart : the name of the macro
+     *      std::string secondPart : the destination code 
+     */
+    macroTable(std::string firstPart, std::string secondPart);
+    ~macroTable() {}
+};
+```
+
+`withArgs`标识了这条宏定义是否含有参数；`srcArgs`存储了定义中的参数的名称，用于宏展开时变量的替换；`defs`中存储了分隔开的目标字符串（将所有变量名（`[a-zA-Z_][0-9a-zA-Z_]*`）视为一个整体，任何一个非变量名中会出现符号视为一个整体，进行字符串分割），这样在宏展开时若出现了和参数中相同的字符串的，直接替换即可。
+
+`match`函数对一段字符串进行查找，查看是否包括这张表所对应的宏，包含则返回`true`；否则返回`false`。
+
+```c++
+bool match(std::string token)
+{
+    if (token.find(this->Name) != token.npos)
+        return true;
+    else
+        return false;
+}
+```
+
+`replace`函数对输入字符串进行宏展开，若无参宏则直接替换，若是带有参数的宏则首先进行字符串的分割，然后检查参数数目是否与定义的参数一致，若不一致则报错提示。然后用提取出的参数替换目标字符串中的形参，最后返回替换完的字符串。
+
+```c++
+std::string replace(std::string input)
+{
+    int pos = input.find(this->Name);
+    if (!withArgs)
+    {
+        // if there is no args, it is just a simple replace
+        std::string head = input.substr(0, pos), tail = input.substr(pos + this->Name.length());
+        return head + " " + this->defs[0] + " " + tail;
+    }
+    else
+    {
+        // if there is arg(s), we need to find out all args
+        std::string head = input.substr(0, pos), cache = input.substr(pos);
+        int rec = 1, delta = this->Name.length();
+        do
+        {
+            delta++;
+            if (cache[delta] == '(')
+                rec++;
+            else if (cache[delta] == ')')
+                rec--;
+        } while (rec != 0);
+        std::string tail = cache.substr(delta + 1), body = cache.substr(this->Name.length() + 1, delta - this->Name.length());
+        cache.clear();
+        std::vector<std::string> args;
+        rec = 1;
+        // find all args
+        for (int i = 0; i < body.length(); i++)
+        {
+            if (body[i] == ',' || body[i] == ' ' || (body[i] == ')' && rec == 1))
+            {
+                if (cache.length() != 0)
+                {
+                    args.push_back(cache);
+                    cache.clear();
+                }
+            }
+            else
+            {
+                if (body[i] == '(')
+                    rec++;
+                else if (body[i] == ')')
+                    rec--;
+                cache += body[i];
+            }
+        }
+        // use the macro in wrong way
+        if (args.size() != this->srcArgs.size())
+        {
+            perror("Wrong MACRO ARGS!");
+        }
+        std::vector<std::string> outputs(defs);
+        for (int i = 0; i < this->srcArgs.size(); i++)
+        {
+            for (auto &output : outputs)
+            {
+                if (this->srcArgs[i] == output)
+                    //if this substring is corresponding to an arg, use it to replcae the arg in the intermediate code
+                {
+                    output = args[i];
+                }
+            }
+        }
+        cache.clear();
+        for (auto output : outputs)
+        {
+            cache += output;
+        }
+        return head + " " + cache + " " + tail;
+    }
+}
+```
+
+`macroTable`类的友函数`preProcess`是对外提供的预处理函数。函数会读取输入文件（`.gc`）的头部，形成一张包含所有`macroTable`的表`std::vector<macroTable> Macros`，然后根据这张表对程序进行宏展开，处理完的代码存放到`.gcpp`文件中。
+
+```c++
+std::string preProcess(std::string filename)
+{
+    std::ifstream fin(filename);
+    // intermediate filename
+    std::ofstream fout(filename + "pp");
+    std::string fileContent;
+    std::vector<macroTable> Macros;
+
+    while (getline(fin, fileContent))
+    {
+        std::stringstream ss;
+        std::string tmp;
+        ss << fileContent;
+        ss >> tmp;
+        if (tmp.size() != 0)
+        {
+            if (tmp == "#define") //find macros
+            {
+                std::vector<std::string> lineTokens;
+                while (ss >> tmp)
+                    lineTokens.push_back(tmp);
+
+                int rec = 0;
+                std::string firstPart, secondPart;
+                if (lineTokens[0].find('(') != lineTokens[0].npos)
+                {
+                    //if it is with args, it's name must end with a ')'
+                    for (int i = 0;; i++)
+                    {
+                        firstPart += lineTokens[i] + " ";
+                        if (lineTokens[i].find(')') != lineTokens[i].npos)
+                        {
+                            rec = i;
+                            break;
+                        }
+                    }
+                }
+                else
+                    firstPart = lineTokens[0];
+                for (int i = rec + 1; i < lineTokens.size(); i++)
+                {
+                    secondPart += lineTokens[i];
+                }
+                // store the marco in macrotable
+                Macros.push_back(macroTable(firstPart, secondPart));
+            }
+            else
+            {
+                // if this line is not a macro define, try to find macros in it and replace it.
+                bool found = true;
+                while (found)
+                {
+                    found = false;
+                    for (auto macro : Macros)
+                    {
+                        while (macro.match(fileContent))
+                        {
+                            fileContent = macro.replace(fileContent);
+                            found = true;
+                        }
+                    }
+                }
+                fout << fileContent << std::endl;
+            }
+        }
+    }
+    fin.close();
+
+    return filename + "pp";
+}
+```
+
+### 7.2 示例
+
+输入测试，测试带参宏展开与宏嵌套：
+
+```
+#define INC(x, y) y=x+1
+#define SL(x) x*2
+
+func main(void)(ret int){
+    int x;
+    int y;
+    x,y=1,0;
+    INC(SL(x),y);
+    return 0;
+}
+```
+
+处理结果如下，说明宏的展开与嵌套均能正确处理，设计正确：
+
+```
+func main(void)(ret int){
+    int x;
+    int y;
+    x,y=1,0;
+     y= x*2 +1 ;
+    return 0;
+}
+```
+
+## 第八章 测试案例
+
+### 8.1 快速排序测试
 
 - 测试代码
 
@@ -1861,7 +2101,7 @@ end5:                                             ; preds = %cond1
 
 <img src="./img/test/qsort.png" alt="image-20210620152759498" style="zoom:80%;" />
 
-### 6.2 矩阵乘法测试
+### 8.2 矩阵乘法测试
 
 - 测试代码
 
@@ -2271,7 +2511,7 @@ entry:
 
 <img src="./img/test/matrix.png" alt="image-20210620152925747" style="zoom:80%;" />
 
-### 6.3 课程助手测试
+### 8.3 课程助手测试
 
 - 测试代码
 
@@ -2757,7 +2997,7 @@ func main(void)(ret int)
 
 <img src="./img/test/course_assist.png" alt="image-20210620153342640" style="zoom:80%;" />
 
-## 第七章 总结
+## 第九章 总结
 
 本次实验我们小组三人设计完成了一个C和Go语言的小型混合编译器，目前支持：
 
