@@ -1,82 +1,72 @@
 # CsGo
 2021编译原理课程作业
 
+### 1.1 语言特点
 
+C语言基本语法加上Go的部分特点
 
-## DeadLine
+### 1.2 开发环境
 
-| Date | Target                         |
-| ---- | ------------------------------ |
-| 5.9  | 完成词法分析和语法分析         |
-| 5.21 | 完成词法分析和语法分析部分代码 |
+- 操作系统：Linux
+- 编译环境：
+  - Flex 2.6.4
+  - Bison 3.5.1 (GNU Bison)
+  - LLVM 10.0.0
 
+### 1.3 文件说明
 
+- src：源代码文件夹
 
-5/21 更新：
+  - mini.l：Flex源代码，主要实现词法分析，生成Token
+  - mini.y：Yacc源代码，主要实现语法分析，生成抽象语法树
+  - ast.h：抽象语法树头文件，定义所有AST节点类
+  - ast.cpp：抽象语法树实现文件，主要包含`codeGen`和`getJoson`方法的实现
+  - CodeGenerator.h：中间代码生成器头文件，定义生成器环境
+  - CodeGenerator.cpp：中间代码生成器实现文件
+  - ObjGenerator.h：生成目标代码所用头文件
+  - ppMacro.h：宏定义相关头文件
+  - ppMacro.cpp：宏定义相关实现文件
+  - Makefile：定义编译链接规则
+  - gentest.sh：生成目标代码并执行测试的脚本
+  - tree.json：基于AST生成的JSON文件
+  - tree.html：可视化AST的网页文件
 
-- lex_test: 对flex进行测试，make编译后，输入`./mini_test test.gc`可以输出词法翻译结果
+- doc：报告文档文件夹
 
-- yacc_test: 对bison进行测试，make编译后，输入同上，可以测试语法分析的解析结果。
+  - report.pdf：报告文档
 
-  ​       如果出错，50%的概率是bison写的不对，50%的概率是test.gc语法不对。
+  - Slides.pdf：展示文档
 
-5/22 更新：
-- 修复语法问题。添加了`function_stmt`一行：
-  ~~~
-  stmt:
-    expr_stmt                           { printf("stmt -> expr_stmt\n"); }
-    | compound_stmt                     { printf("stmt -> compound_stmt\n"); }
-    | selection_stmt                    { printf("stmt -> selection_stmt\n"); }
-    | iteration_stmt                    { printf("stmt -> iteration-stmt\n"); }
-    | return_stmt                       { printf("stmt -> return-stmt\n"); }
-    | function_stmt                     { printf("stmt -> function-stmt\n"); }
-  
-  function_stmt:
-    call
-  ~~~
-  修改后，函数调用，if、while语句均可正常执行。
-- 接下来的可能改进：
-  - [ ] for语句
-  - [x] 数组
-  - [ ] 声明处赋值
+- test：测试用例文件夹
 
-5/25 :
-完成ast和可视化部分，对于之前提到过的测试文件进行测试均能通过，同时增加了嵌套if-else和while的测试。
+  - qsort
+    - qsort.gc：快速排序的实现代码
+    - linux-amd64：测试文件
 
+  - matrix
+    - matrix.gc：矩阵乘法的实现代码
+    - linux-amd64：测试文件
 
+  - course_assist
+    - c_assist.gc：选课助手实现代码
+    - linux-amd64：测试文件
 
-6.2：
+### 1.4 组员分工
 
-不知道修改了多少地方！
+| 组员   | 具体分工                             |
+| :----- | :----------------------------------- |
+| 刘馨宇 | 词法分析，语法分析                   |
+| 毕邹彬 | AST定义，AST可视化，宏定义           |
+| 吴韬   | 语义分析，中间代码生成，目标代码生成 |
 
-运行：
+### 1.5 运行方式
 
-```
+可使用测试脚本`gentest.sh`运行提供的测试程序
+
+```shell
+cd ./src
 make
-./mini test2.gc
+./mini filename.gc
+clang filename.o -o filename.out
 ```
 
-然后命令行会输出一堆东西！但是没有写ObjGenerator！
-
-从这里面复制到test.ll里面！前四行不要动！
-
-* 直接运行：
-
-```
-lli test.ll
-```
-
-* 生成可执行文件
-
-```
-./BinGen.sh test.ll
-```
-
-* 宏
-
-加入无参数和有参数宏，实例如下：
-```
-#define INC(x) x=x+1
-#define MAX 100
-```
-编译时会生成预处理文件.gcpp
